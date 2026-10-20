@@ -11,6 +11,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import SearchResultsScreen from './src/screens/SearchResultsScreen';
 import SeatSelectionScreen from './src/screens/SeatSelectionScreen';
 import PassengerInfoScreen from './src/screens/PassengerInfoScreen';
+import BookingSummaryScreen from './src/screens/BookingSummaryScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -86,6 +87,9 @@ export default function App() {
         />
         <Stack.Screen name="PassengerInfo" 
         component={PassengerInfoScreen} 
+        />
+        <Stack.Screen name="BookingSummary" 
+        component={BookingSummaryScreen} 
         />
       </Stack.Navigator>
     </NavigationContainer>
