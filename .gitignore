@@ -39,3 +39,24 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+*.log
+
+# Python / Django / FastAPI
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.sqlite3
+.env
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
