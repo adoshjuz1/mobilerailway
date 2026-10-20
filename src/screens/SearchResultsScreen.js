@@ -114,7 +114,7 @@ export default function SearchResultsScreen({ route, navigation }) {
               <Text style={styles.amenityText}>📶 Wi-Fi</Text>
               <Text style={styles.amenityText}>🍽️ Тамақтану</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('SeatSelection')}>
+            <TouchableOpacity onPress={() => navigation.navigate('TrainDetails')}>
               <Text style={styles.selectLink}>Таңдау ›</Text>
             </TouchableOpacity>
           </View>
@@ -160,7 +160,7 @@ export default function SearchResultsScreen({ route, navigation }) {
             <View style={styles.amenitiesRow}>
               <Text style={styles.amenityText}>🔌 Розетка</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('SeatSelection')}>
+            <TouchableOpacity onPress={() => navigation.navigate('TrainDetails')}>
               <Text style={styles.selectLink}>Таңдау ›</Text>
             </TouchableOpacity>
           </View>
@@ -212,7 +212,7 @@ export default function SearchResultsScreen({ route, navigation }) {
             </View>
             <TouchableOpacity 
               style={styles.bookNowBtn}
-              onPress={() => navigation.navigate('SeatSelection')}
+              onPress={() => navigation.navigate('TrainDetails')}
             >
               <Text style={styles.bookNowText}>Брондау</Text>
             </TouchableOpacity>
