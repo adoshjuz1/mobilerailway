@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,36 +7,52 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
+  FlatList,
 } from 'react-native';
+import { searchTrains } from '../services/api';
 
 export default function SearchResultsScreen({ route, navigation }) {
-  const { fromCity = 'Астана', toCity = 'Алматы' } = route.params || {};
+  const { fromCity = 'Алматы', toCity = 'Атырау', date = '2026-10-16' } = route.params || {};
   const [activeFilter, setActiveFilter] = useState('cheapest');
+  const [trains, setTrains] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadTrainsData() {
+      setLoading(true);
+      const data = await searchTrains(fromCity, toCity, date);
+      setTrains(data);
+      setLoading(false);
+    }
+    loadTrainsData();
+  }, [fromCity, toCity, date]);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      
+      {/* Верхняя шапка */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.hamburgerIcon}>☰</Text>
+        </TouchableOpacity>
+        <Text style={styles.brandTitle}>Railway Connect</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('ProfileTab')}>
+          <View style={styles.avatarPlaceholder}>
+            <Text style={{ fontSize: 16 }}>👤</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Верхняя шапка */}
-        <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.hamburgerIcon}>☰</Text>
-          </TouchableOpacity>
-          <Text style={styles.brandTitle}>Railway Connect</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('ProfileTab')}>
-            <View style={styles.avatarPlaceholder}>
-              <Text style={{ fontSize: 16 }}>👤</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
         {/* Блок маршрута */}
         <View style={styles.routeHeader}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.routeDateText}>Сәрсенбі, 25 Қаз</Text>
+            <Text style={styles.routeDateText}>{date}</Text>
             <Text style={styles.routeCitiesText}>{fromCity} ➔ {toCity}</Text>
-            <Text style={styles.routeSubText}>2 ересек үшін 12 нәтиже табылды</Text>
+            <Text style={styles.routeSubText}>Табылған поездар саны: {trains.length}</Text>
           </View>
           <TouchableOpacity style={styles.modifyBtn} onPress={() => navigation.goBack()}>
             <Text style={styles.modifyBtnText}>Өзгерту</Text>
@@ -45,15 +61,6 @@ export default function SearchResultsScreen({ route, navigation }) {
 
         {/* Фильтры */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
-          <TouchableOpacity 
-            style={[styles.filterBtn, activeFilter === 'all' && styles.filterBtnActive]}
-            onPress={() => setActiveFilter('all')}
-          >
-            <Text style={[styles.filterText, activeFilter === 'all' && styles.filterTextActive]}>
-              ⚙️ Сүзгілер
-            </Text>
-          </TouchableOpacity>
-
           <TouchableOpacity 
             style={[styles.filterBtn, activeFilter === 'cheapest' && styles.filterBtnActive]}
             onPress={() => setActiveFilter('cheapest')}
@@ -73,151 +80,68 @@ export default function SearchResultsScreen({ route, navigation }) {
           </TouchableOpacity>
         </ScrollView>
 
-        {/* Поезд 1: Экспресс #9021 */}
-        <View style={styles.trainCard}>
-          <View style={styles.cardHeader}>
-            <View style={styles.expressBadge}>
-              <Text style={styles.expressBadgeText}>Экспресс</Text>
-            </View>
-            <Text style={styles.trainNumber}>Поезд #9021</Text>
-            <Text style={styles.priceText}>12 400 ₸</Text>
+        {/* Индикатор загрузки или список поездов из БД */}
+        {loading ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#0F2C59" />
+            <Text style={{ marginTop: 10, color: '#64748B' }}>Поезда жүктелуде...</Text>
           </View>
-
-          <View style={styles.timelineRow}>
-            <View style={{ alignItems: 'flex-start' }}>
-              <Text style={styles.timeText}>08:30</Text>
-              <Text style={styles.stationText}>Нұрлы Жол</Text>
-            </View>
-
-            <View style={styles.durationBox}>
-              <Text style={styles.durationText}>2 сағ 16 мин</Text>
-              <View style={styles.lineWithIcon}>
-                <View style={styles.lineDot} />
-                <View style={styles.lineTrack} />
-                <Text style={styles.trainIconInline}>🚆</Text>
-                <View style={styles.lineTrack} />
-                <View style={styles.lineDot} />
+        ) : trains.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <Text style={{ color: '#64748B', fontSize: 14 }}>Өкінішке орай, бұл бағытқа поездар табылмады.</Text>
+          </View>
+        ) : (
+          trains.map((item) => (
+            <View key={item.id} style={styles.trainCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.expressBadge}>
+                  <Text style={styles.expressBadgeText}>{item.category || 'Скоростной'}</Text>
+                </View>
+                <Text style={styles.trainNumber}>Поезд #{item.number} ({item.name})</Text>
+                <Text style={styles.priceText}>{item.min_price} ₸</Text>
               </View>
-              <Text style={styles.directText}>Төте</Text>
-            </View>
 
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.timeText}>11:46</Text>
-              <Text style={styles.stationText}>Алматы 2</Text>
-            </View>
-          </View>
+              <View style={styles.timelineRow}>
+                <View style={{ alignItems: 'flex-start' }}>
+                  <Text style={styles.timeText}>{item.departure_time}</Text>
+                  <Text style={styles.stationText}>{item.from_city}</Text>
+                </View>
 
-          <View style={styles.cardDivider} />
+                <View style={styles.durationBox}>
+                  <Text style={styles.durationText}>{item.duration_text}</Text>
+                  <View style={styles.lineWithIcon}>
+                    <View style={styles.lineDot} />
+                    <View style={styles.lineTrack} />
+                    <Text style={styles.trainIconInline}>🚆</Text>
+                    <View style={styles.lineTrack} />
+                    <View style={styles.lineDot} />
+                  </View>
+                  <Text style={styles.directText}>Төте</Text>
+                </View>
 
-          <View style={styles.cardFooter}>
-            <View style={styles.amenitiesRow}>
-              <Text style={styles.amenityText}>📶 Wi-Fi</Text>
-              <Text style={styles.amenityText}>🍽️ Тамақтану</Text>
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('TrainDetails')}>
-              <Text style={styles.selectLink}>Таңдау ›</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Поезд 2: Өңірлік #R455 */}
-        <View style={styles.trainCard}>
-          <View style={styles.cardHeader}>
-            <View style={styles.regionalBadge}>
-              <Text style={styles.regionalBadgeText}>Өңірлік</Text>
-            </View>
-            <Text style={styles.trainNumber}>Поезд #R455</Text>
-            <Text style={styles.priceText}>4 550 ₸</Text>
-          </View>
-
-          <View style={styles.timelineRow}>
-            <View style={{ alignItems: 'flex-start' }}>
-              <Text style={styles.timeText}>09:15</Text>
-              <Text style={styles.stationText}>Нұрлы Жол</Text>
-            </View>
-
-            <View style={styles.durationBox}>
-              <Text style={styles.durationText}>4 сағ 05 мин</Text>
-              <View style={styles.lineWithIcon}>
-                <View style={styles.lineDot} />
-                <View style={styles.lineTrack} />
-                <View style={styles.stopDot} />
-                <View style={styles.lineTrack} />
-                <View style={styles.lineDot} />
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.timeText}>{item.arrival_time}</Text>
+                  <Text style={styles.stationText}>{item.to_city}</Text>
+                </View>
               </View>
-              <Text style={styles.stopText}>1 аялдама (Қарағанды)</Text>
-            </View>
 
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.timeText}>13:20</Text>
-              <Text style={styles.stationText}>Алматы 1</Text>
-            </View>
-          </View>
+              <View style={styles.cardDivider} />
 
-          <View style={styles.cardDivider} />
-
-          <View style={styles.cardFooter}>
-            <View style={styles.amenitiesRow}>
-              <Text style={styles.amenityText}>🔌 Розетка</Text>
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('TrainDetails')}>
-              <Text style={styles.selectLink}>Таңдау ›</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Поезд 3: Экспресс #9025 (ЕҢ ЖЫЛДАМ) */}
-        <View style={[styles.trainCard, styles.fastestCard]}>
-          <View style={styles.topRibbon}>
-            <Text style={styles.topRibbonText}>ЕҢ ЖЫЛДАМ</Text>
-          </View>
-
-          <View style={[styles.cardHeader, { marginTop: 6 }]}>
-            <View style={styles.expressBadge}>
-              <Text style={styles.expressBadgeText}>Экспресс</Text>
-            </View>
-            <Text style={styles.trainNumber}>Поезд #9025</Text>
-            <Text style={styles.priceText}>15 600 ₸</Text>
-          </View>
-
-          <View style={styles.timelineRow}>
-            <View style={{ alignItems: 'flex-start' }}>
-              <Text style={styles.timeText}>10:24</Text>
-              <Text style={styles.stationText}>Нұрлы Жол</Text>
-            </View>
-
-            <View style={styles.durationBox}>
-              <Text style={styles.durationText}>2 сағ 12 мин</Text>
-              <View style={styles.lineWithIcon}>
-                <View style={styles.lineDot} />
-                <View style={styles.lineTrack} />
-                <Text style={styles.trainIconInline}>⚡</Text>
-                <View style={styles.lineTrack} />
-                <View style={styles.lineDot} />
+              <View style={styles.cardFooter}>
+                <View style={styles.amenitiesRow}>
+                  <Text style={styles.amenityText}>📶 Wi-Fi</Text>
+                  <Text style={styles.amenityText}>🔌 Розетка</Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.bookNowBtn}
+                  onPress={() => navigation.navigate('TrainDetails', { train: item })}
+                >
+                  <Text style={styles.bookNowText}>Таңдау ›</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.directText}>Төте</Text>
             </View>
-
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.timeText}>13:36</Text>
-              <Text style={styles.stationText}>Алматы 2</Text>
-            </View>
-          </View>
-
-          <View style={styles.cardDivider} />
-
-          <View style={styles.cardFooter}>
-            <View style={styles.amenitiesRow}>
-              <Text style={styles.amenityText}>⚡ Жоғары жылдамдықты Wi-Fi</Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.bookNowBtn}
-              onPress={() => navigation.navigate('TrainDetails')}
-            >
-              <Text style={styles.bookNowText}>Брондау</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          ))
+        )}
 
         {/* Промо карточки снизу */}
         <View style={styles.promoRow}>
@@ -243,10 +167,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F6F9',
+    paddingHorizontal: 20,
+    paddingTop: 10,
   },
   scrollContent: {
-    padding: 20,
     paddingBottom: 110,
+  },
+  centerContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   topHeader: {
     flexDirection: 'row',
@@ -337,25 +267,6 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
-  fastestCard: {
-    borderWidth: 1.5,
-    borderColor: '#0F2C59',
-    overflow: 'hidden',
-  },
-  topRibbon: {
-    backgroundColor: '#0F2C59',
-    alignSelf: 'flex-end',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderBottomLeftRadius: 10,
-    marginRight: -16,
-    marginTop: -16,
-  },
-  topRibbonText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -370,18 +281,6 @@ const styles = StyleSheet.create({
   },
   expressBadgeText: {
     color: '#15803D',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  regionalBadge: {
-    backgroundColor: '#E0E7FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  regionalBadgeText: {
-    color: '#4338CA',
     fontSize: 11,
     fontWeight: 'bold',
   },
@@ -437,12 +336,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: '#3B82F6',
   },
-  stopDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#EF4444',
-  },
   trainIconInline: {
     fontSize: 12,
     marginHorizontal: 4,
@@ -451,11 +344,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#16A34A',
     fontWeight: 'bold',
-    marginTop: 4,
-  },
-  stopText: {
-    fontSize: 10,
-    color: '#64748B',
     marginTop: 4,
   },
   cardDivider: {
@@ -475,11 +363,6 @@ const styles = StyleSheet.create({
   amenityText: {
     fontSize: 12,
     color: '#475569',
-  },
-  selectLink: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#0F2C59',
   },
   bookNowBtn: {
     backgroundColor: '#0F2C59',
