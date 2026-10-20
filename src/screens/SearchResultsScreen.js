@@ -1,480 +1,238 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
-  View,
+  StyleSheet,
   Text,
-  TextInput,
+  View,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
-  Modal,
   SafeAreaView,
-  ActivityIndicator,
-  Alert,
+  StatusBar,
 } from 'react-native';
 
 export default function SearchResultsScreen({ route, navigation }) {
-  const { from = 'Алматы', to = 'Атырау', date = '2026-10-18', return_date = '' } = route.params || {};
-  const scrollRef = useRef(null);
-
-  const [fromInput, setFromInput] = useState(from);
-  const [toInput, setToInput] = useState(to);
-  const [dateInput, setDateInput] = useState(date);
-  const [returnDateInput, setReturnDateInput] = useState(return_date);
-
-  const [activeCalendarTab, setActiveCalendarTab] = useState(null); 
-  const [trainPricesByDate, setTrainPricesByDate] = useState({});
-
-  const [trains, setTrains] = useState([]);
-  const [availableDatesMap, setAvailableDatesMap] = useState({});
-  const [loading, setLoading] = useState(true);
-
-  // Фильтры
-  const [filterPlatzkart, setFilterPlatzkart] = useState(true);
-  const [filterCoupe, setFilterCoupe] = useState(true);
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-
-  // Текущая системная дата (18 октября 2026)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const monthNames = [
-    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-  ];
-
-  const firstMonthDate = new Date(today.getFullYear(), today.getMonth(), 1);
-  const secondMonthDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-
-  const calculateArrivalDate = (depDateStr, durationText, depTimeStr = '22:30') => {
-    try {
-      if (!depDateStr) return 'вс 18.10';
-      
-      let year = today.getFullYear(), month = 10, day = 18;
-      if (typeof depDateStr === 'string' && depDateStr.includes('-')) {
-        const parts = depDateStr.split('-');
-        if (parts.length === 3) {
-          year = parseInt(parts[0], 10);
-          month = parseInt(parts[1], 10);
-          day = parseInt(parts[2], 10);
-        }
-      }
-
-      let depH = 22, depM = 30;
-      if (depTimeStr && depTimeStr.includes(':')) {
-        const tParts = depTimeStr.split(':');
-        depH = parseInt(tParts[0], 10) || 0;
-        depM = parseInt(tParts[1], 10) || 0;
-      }
-
-      const depDate = new Date(year, month - 1, day, depH, depM);
-
-      let totalHours = 0;
-      let totalMins = 0;
-      if (durationText) {
-        const hMatch = durationText.match(/(\d+)\s*ч/);
-        const mMatch = durationText.match(/(\d+)\s*м/);
-        if (hMatch) totalHours = parseInt(hMatch[1], 10);
-        if (mMatch) totalMins = parseInt(mMatch[1], 10);
-      }
-
-      const durationMs = (totalHours * 60 + totalMins) * 60 * 1000;
-      const arrDate = new Date(depDate.getTime() + durationMs);
-
-      const days = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-      const dayName = days[arrDate.getDay()];
-      const dayNum = String(arrDate.getDate()).padStart(2, '0');
-      const monthNum = String(arrDate.getMonth() + 1).padStart(2, '0');
-      
-      return `${dayName} ${dayNum}.${monthNum}`;
-    } catch (e) {
-      return depDateStr;
-    }
-  };
-
-  const formatRussianDepDate = (dateStr) => {
-    try {
-      if (!dateStr) return 'вс 18.10';
-      const parts = dateStr.split('-');
-      if (parts.length !== 3) return dateStr;
-      const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-      const days = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-      const dayName = days[d.getDay()];
-      const dayNum = String(d.getDate()).padStart(2, '0');
-      const monthNum = String(d.getMonth() + 1).padStart(2, '0');
-      return `${dayName} ${dayNum}.${monthNum}`;
-    } catch (e) {
-      return dateStr;
-    }
-  };
-
-  useEffect(() => {
-    fetchTrains();
-    fetchAvailableDates();
-  }, [dateInput, from, to]);
-
-  const fetchTrains = async () => {
-    setLoading(true);
-    try {
-      const queryParams = new URLSearchParams({
-        from_city: from,
-        to_city: to,
-        date: dateInput
-      });
-
-      const response = await fetch(`http://172.20.10.6:8000/api/trains/search?${queryParams.toString()}`);
-      if (!response.ok) throw new Error('Ошибка сети');
-      const data = await response.json();
-      setTrains(data);
-    } catch (error) {
-      console.log('Ошибка бэкенда FastAPI:', error);
-      setTrains([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAvailableDates = async () => {
-    try {
-      const response = await fetch(`http://172.20.10.6:8000/api/trains/available-dates?from_city=${encodeURIComponent(from)}&to_city=${encodeURIComponent(to)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableDatesMap(data);
-        setTrainPricesByDate(data);
-      }
-    } catch (err) {
-      console.log('Ошибка загрузки дат для ленты:', err);
-    }
-  };
-
-  // Генерация ленты дат: убираем прошедшие дни и дни без рейсов
-  const generateDateRibbon = () => {
-    const ribbon = [];
-    const daysOfWeek = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-    const monthsNames = ['янв.', 'фев.', 'мар.', 'апр.', 'май', 'июн.', 'июл.', 'авг.', 'сен.', 'окт.', 'ноя.', 'дек.'];
-
-    for (let i = 0; i < 45; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const fullDate = `${year}-${month}-${day}`;
-      
-      const price = availableDatesMap[fullDate];
-
-      // Оставляем ТОЛЬКО те дни, на которые есть рейсы/цены в базе данных
-      if (price) {
-        ribbon.push({
-          day: daysOfWeek[d.getDay()],
-          date: `${d.getDate()} ${monthsNames[d.getMonth()]}`,
-          fullDate: fullDate,
-          price: price
-        });
-      }
-    }
-    return ribbon;
-  };
-
-  const dateRibbon = generateDateRibbon();
-
-  const handleSearchSubmit = () => {
-    setLoading(true);
-    fetchTrains();
-  };
-
-  const handleSelectDate = (dateStr) => {
-    if (activeCalendarTab === 'there') {
-      setDateInput(dateStr);
-    } else if (activeCalendarTab === 'back') {
-      setReturnDateInput(dateStr);
-    }
-    setActiveCalendarTab(null);
-  };
-
-  const scrollRibbon = (direction) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ x: direction === 'left' ? 0 : 300, animated: true });
-    }
-  };
-
-  const renderMonthCalendar = (year, monthIndex) => {
-    const firstDay = new Date(year, monthIndex, 1).getDay();
-    const offset = firstDay === 0 ? 6 : firstDay - 1;
-    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-    const monthStr = monthIndex + 1 < 10 ? `0${monthIndex + 1}` : `${monthIndex + 1}`;
-    const cells = [];
-
-    for (let i = 0; i < offset; i++) {
-      cells.push(<View key={`empty-${i}`} style={styles.dayCellEmpty} />);
-    }
-
-    for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
-      const formattedDay = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
-      const dateStr = `${year}-${monthStr}-${formattedDay}`;
-      const cellDate = new Date(year, monthIndex, dayNum);
-
-      const isPast = cellDate < today;
-      const price = trainPricesByDate[dateStr];
-      const isSelected = (activeCalendarTab === 'there' ? dateInput : returnDateInput) === dateStr;
-      const isAvailable = Boolean(price) && !isPast;
-
-      cells.push(
-        <TouchableOpacity
-          key={dayNum}
-          disabled={isPast || !isAvailable}
-          onPress={() => isAvailable && handleSelectDate(dateStr)}
-          style={[
-            styles.dayCell,
-            isAvailable && styles.dayCellAvailable,
-            isSelected && styles.dayCellSelected,
-          ]}
-        >
-          <Text style={[styles.dayNumText, (isPast || !price) && styles.dayNumTextUnavailable, isSelected && styles.dayTextSelected]}>
-            {dayNum}
-          </Text>
-          {!isPast && price ? (
-            <Text style={[styles.priceText, isSelected && styles.dayTextSelected]} numberOfLines={1}>
-              {price}
-            </Text>
-          ) : null}
-        </TouchableOpacity>
-      );
-    }
-    return cells;
-  };
-
-  const filteredTrains = trains.filter(train => {
-    const coupePrice = train.coupe_price || train.min_price || 20000;
-    const platskartPrice = train.platskart_price || train.min_price || 10000;
-    
-    const currentMin = Math.min(
-      filterCoupe ? coupePrice : Infinity, 
-      filterPlatzkart ? platskartPrice : Infinity
-    );
-
-    if (minPrice !== '' && currentMin < Number(minPrice)) return false;
-    if (maxPrice !== '' && currentMin > Number(maxPrice)) return false;
-
-    return true;
-  });
-
-  const goToSeatSelection = (train, carriageType) => {
-    navigation.navigate('SeatSelection', { 
-      train, 
-      carriageType,
-      fromCity: from,
-      toCity: to,
-      date: dateInput
-    });
-  };
+  const { fromCity = 'Астана', toCity = 'Алматы' } = route.params || {};
+  const [activeFilter, setActiveFilter] = useState('cheapest');
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Поисковая панель */}
-        <View style={styles.searchBox}>
-          <Text style={styles.label}>Откуда</Text>
-          <TextInput 
-            style={styles.input} 
-            value={fromInput} 
-            onChangeText={setFromInput} 
-          />
-
-          <Text style={styles.label}>Куда</Text>
-          <TextInput 
-            style={styles.input} 
-            value={toInput} 
-            onChangeText={setToInput} 
-          />
-
-          <View style={styles.rowDates}>
-            <View style={styles.dateCol}>
-              <Text style={styles.label}>Туда</Text>
-              <TouchableOpacity 
-                style={styles.dateSelector} 
-                onPress={() => setActiveCalendarTab('there')}
-              >
-                <Text style={styles.dateText}>{dateInput}</Text>
-              </TouchableOpacity>
+        {/* Верхняя шапка */}
+        <View style={styles.topHeader}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.hamburgerIcon}>☰</Text>
+          </TouchableOpacity>
+          <Text style={styles.brandTitle}>Railway Connect</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('ProfileTab')}>
+            <View style={styles.avatarPlaceholder}>
+              <Text style={{ fontSize: 16 }}>👤</Text>
             </View>
-
-            <View style={styles.dateCol}>
-              <View style={styles.labelRow}>
-                <Text style={styles.label}>Обратно</Text>
-                {returnDateInput ? (
-                  <TouchableOpacity onPress={() => setReturnDateInput('')}>
-                    <Text style={styles.clearText}>✕ Сбросить</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-              <TouchableOpacity 
-                style={styles.dateSelector} 
-                onPress={() => setActiveCalendarTab('back')}
-              >
-                <Text style={styles.dateText}>{returnDateInput || 'В одну сторону'}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <TouchableOpacity style={styles.searchBtn} onPress={handleSearchSubmit}>
-            <Text style={styles.searchBtnText}>Найти</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Всплывающий календарь */}
-        <Modal visible={activeCalendarTab !== null} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {activeCalendarTab === 'there' ? 'Выберите дату туда' : 'Выберите дату обратно'}
-                </Text>
-                <TouchableOpacity 
-                  style={styles.oneWayBtn} 
-                  onPress={() => { setReturnDateInput(''); setActiveCalendarTab(null); }}
-                >
-                  <Text style={styles.oneWayBtnText}>В одну сторону</Text>
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView style={{ maxHeight: 400 }}>
-                <Text style={styles.monthTitle}>
-                  {monthNames[firstMonthDate.getMonth()]} {firstMonthDate.getFullYear()}
-                </Text>
-                <View style={styles.weekHeader}>
-                  {['пн','вт','ср','чт','пт','сб','вс'].map(d => <Text key={d} style={styles.weekDayText}>{d}</Text>)}
-                </View>
-                <View style={styles.calendarGrid}>{renderMonthCalendar(firstMonthDate.getFullYear(), firstMonthDate.getMonth())}</View>
-
-                <Text style={[styles.monthTitle, { marginTop: 15 }]}>
-                  {monthNames[secondMonthDate.getMonth()]} {secondMonthDate.getFullYear()}
-                </Text>
-                <View style={styles.weekHeader}>
-                  {['пн','вт','ср','чт','пт','сб','вс'].map(d => <Text key={d} style={styles.weekDayText}>{d}</Text>)}
-                </View>
-                <View style={styles.calendarGrid}>{renderMonthCalendar(secondMonthDate.getFullYear(), secondMonthDate.getMonth())}</View>
-              </ScrollView>
-
-              <TouchableOpacity style={styles.closeModalBtn} onPress={() => setActiveCalendarTab(null)}>
-                <Text style={styles.closeModalBtnText}>Закрыть</Text>
-              </TouchableOpacity>
-            </View>
+        {/* Блок маршрута */}
+        <View style={styles.routeHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.routeDateText}>Сәрсенбі, 25 Қаз</Text>
+            <Text style={styles.routeCitiesText}>{fromCity} ➔ {toCity}</Text>
+            <Text style={styles.routeSubText}>2 ересек үшін 12 нәтиже табылды</Text>
           </View>
-        </Modal>
-
-        {/* Блок фильтров */}
-        <View style={styles.filterCard}>
-          <Text style={styles.filterTitle}>Фильтры</Text>
-          <View style={styles.checkboxRow}>
-            <TouchableOpacity onPress={() => setFilterPlatzkart(!filterPlatzkart)} style={styles.checkItem}>
-              <Text style={styles.checkbox}>{filterPlatzkart ? '☑' : '☐'}</Text>
-              <Text style={styles.filterText}>Плацкарт</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setFilterCoupe(!filterCoupe)} style={styles.checkItem}>
-              <Text style={styles.checkbox}>{filterCoupe ? '☑' : '☐'}</Text>
-              <Text style={styles.filterText}>Купе</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.modifyBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.modifyBtnText}>Өзгерту</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Лента дат ТОЛЬКО С ДОСТУПНЫМИ РЕЙСАМИ */}
-        <View style={styles.ribbonContainer}>
-          <TouchableOpacity style={styles.ribbonArrow} onPress={() => scrollRibbon('left')}>
-            <Text style={styles.arrowText}>‹</Text>
-          </TouchableOpacity>
-
-          <ScrollView 
-            ref={scrollRef} 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            contentContainerStyle={styles.ribbonScroll}
+        {/* Фильтры */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
+          <TouchableOpacity 
+            style={[styles.filterBtn, activeFilter === 'all' && styles.filterBtnActive]}
+            onPress={() => setActiveFilter('all')}
           >
-            {dateRibbon.length === 0 ? (
-              <Text style={{ color: '#8e929b', fontSize: 12, paddingVertical: 10 }}>Нет доступных рейсов на ближайшие дни</Text>
-            ) : (
-              dateRibbon.map((item, idx) => {
-                const isActive = dateInput === item.fullDate;
-                return (
-                  <TouchableOpacity 
-                    key={idx} 
-                    onPress={() => setDateInput(item.fullDate)}
-                    style={[
-                      styles.ribbonItem,
-                      isActive && styles.ribbonActive
-                    ]}
-                  >
-                    <Text style={[styles.ribbonDayText, isActive && styles.ribbonActiveText]}>{item.day} {item.date}</Text>
-                    <Text style={[styles.ribbonPriceText, isActive && styles.ribbonActiveText]}>
-                      от {item.price.toLocaleString()} ₸
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </ScrollView>
-
-          <TouchableOpacity style={styles.ribbonArrow} onPress={() => scrollRibbon('right')}>
-            <Text style={styles.arrowText}>›</Text>
+            <Text style={[styles.filterText, activeFilter === 'all' && styles.filterTextActive]}>
+              ⚙️ Сүзгілер
+            </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.filterBtn, activeFilter === 'cheapest' && styles.filterBtnActive]}
+            onPress={() => setActiveFilter('cheapest')}
+          >
+            <Text style={[styles.filterText, activeFilter === 'cheapest' && styles.filterTextActive]}>
+              ⚡ Ең арзан
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.filterBtn, activeFilter === 'fastest' && styles.filterBtnActive]}
+            onPress={() => setActiveFilter('fastest')}
+          >
+            <Text style={[styles.filterText, activeFilter === 'fastest' && styles.filterTextActive]}>
+              🚀 Ең жылдам
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+        {/* Поезд 1: Экспресс #9021 */}
+        <View style={styles.trainCard}>
+          <View style={styles.cardHeader}>
+            <View style={styles.expressBadge}>
+              <Text style={styles.expressBadgeText}>Экспресс</Text>
+            </View>
+            <Text style={styles.trainNumber}>Поезд #9021</Text>
+            <Text style={styles.priceText}>12 400 ₸</Text>
+          </View>
+
+          <View style={styles.timelineRow}>
+            <View style={{ alignItems: 'flex-start' }}>
+              <Text style={styles.timeText}>08:30</Text>
+              <Text style={styles.stationText}>Нұрлы Жол</Text>
+            </View>
+
+            <View style={styles.durationBox}>
+              <Text style={styles.durationText}>2 сағ 16 мин</Text>
+              <View style={styles.lineWithIcon}>
+                <View style={styles.lineDot} />
+                <View style={styles.lineTrack} />
+                <Text style={styles.trainIconInline}>🚆</Text>
+                <View style={styles.lineTrack} />
+                <View style={styles.lineDot} />
+              </View>
+              <Text style={styles.directText}>Төте</Text>
+            </View>
+
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.timeText}>11:46</Text>
+              <Text style={styles.stationText}>Алматы 2</Text>
+            </View>
+          </View>
+
+          <View style={styles.cardDivider} />
+
+          <View style={styles.cardFooter}>
+            <View style={styles.amenitiesRow}>
+              <Text style={styles.amenityText}>📶 Wi-Fi</Text>
+              <Text style={styles.amenityText}>🍽️ Тамақтану</Text>
+            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('SeatSelection')}>
+              <Text style={styles.selectLink}>Таңдау ›</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Список поездов */}
-        <Text style={styles.trainsCountTitle}>Поездов по маршруту: {filteredTrains.length}</Text>
+        {/* Поезд 2: Өңірлік #R455 */}
+        <View style={styles.trainCard}>
+          <View style={styles.cardHeader}>
+            <View style={styles.regionalBadge}>
+              <Text style={styles.regionalBadgeText}>Өңірлік</Text>
+            </View>
+            <Text style={styles.trainNumber}>Поезд #R455</Text>
+            <Text style={styles.priceText}>4 550 ₸</Text>
+          </View>
 
-        {loading ? (
-          <ActivityIndicator size="large" color="#0dcaf0" style={{ marginTop: 30 }} />
-        ) : filteredTrains.length === 0 ? (
-          <View style={styles.alertBox}><Text style={styles.alertText}>Поездов на эту дату не найдено.</Text></View>
-        ) : (
-          filteredTrains.map((train, idx) => {
-            const coupePrice = train.coupe_price || 20000;
-            const platskartPrice = train.platskart_price || 10000;
-            const computedDepDate = formatRussianDepDate(dateInput);
-            const computedArrDate = calculateArrivalDate(dateInput, train.duration_text, train.departure_time);
+          <View style={styles.timelineRow}>
+            <View style={{ alignItems: 'flex-start' }}>
+              <Text style={styles.timeText}>09:15</Text>
+              <Text style={styles.stationText}>Нұрлы Жол</Text>
+            </View>
 
-            return (
-              <View key={idx} style={styles.trainCard}>
-                <View style={styles.trainHeader}>
-                  <Text style={styles.trainBadge}>{train.number}</Text>
-                  <Text style={styles.trainName}>{train.name}</Text>
-                </View>
-
-                <View style={styles.trainTimesRow}>
-                  <View>
-                    <Text style={styles.timeText}>{train.departure_time}</Text>
-                    <Text style={styles.cityText}>{from} ({computedDepDate})</Text>
-                  </View>
-                  <View style={styles.durationCol}>
-                    <Text style={styles.durationText}>{train.duration_text}</Text>
-                    <View style={styles.durationLine} />
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.timeText}>{train.arrival_time}</Text>
-                    <Text style={styles.cityText}>{to} ({computedArrDate})</Text>
-                  </View>
-                </View>
-
-                <View style={styles.carriagesRow}>
-                  {filterCoupe && (
-                    <TouchableOpacity style={styles.carriageBox} onPress={() => goToSeatSelection(train, 'coupe')}>
-                      <Text style={styles.carriageTitle}>Купе</Text>
-                      <Text style={styles.carriagePrice}>от {coupePrice.toLocaleString()} ₸</Text>
-                    </TouchableOpacity>
-                  )}
-                  {filterPlatzkart && (
-                    <TouchableOpacity style={styles.carriageBox} onPress={() => goToSeatSelection(train, 'platskart')}>
-                      <Text style={styles.carriageTitle}>Плацкарт</Text>
-                      <Text style={styles.carriagePrice}>от {platskartPrice.toLocaleString()} ₸</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
+            <View style={styles.durationBox}>
+              <Text style={styles.durationText}>4 сағ 05 мин</Text>
+              <View style={styles.lineWithIcon}>
+                <View style={styles.lineDot} />
+                <View style={styles.lineTrack} />
+                <View style={styles.stopDot} />
+                <View style={styles.lineTrack} />
+                <View style={styles.lineDot} />
               </View>
-            );
-          })
-        )}
+              <Text style={styles.stopText}>1 аялдама (Қарағанды)</Text>
+            </View>
+
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.timeText}>13:20</Text>
+              <Text style={styles.stationText}>Алматы 1</Text>
+            </View>
+          </View>
+
+          <View style={styles.cardDivider} />
+
+          <View style={styles.cardFooter}>
+            <View style={styles.amenitiesRow}>
+              <Text style={styles.amenityText}>🔌 Розетка</Text>
+            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('SeatSelection')}>
+              <Text style={styles.selectLink}>Таңдау ›</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Поезд 3: Экспресс #9025 (ЕҢ ЖЫЛДАМ) */}
+        <View style={[styles.trainCard, styles.fastestCard]}>
+          <View style={styles.topRibbon}>
+            <Text style={styles.topRibbonText}>ЕҢ ЖЫЛДАМ</Text>
+          </View>
+
+          <View style={[styles.cardHeader, { marginTop: 6 }]}>
+            <View style={styles.expressBadge}>
+              <Text style={styles.expressBadgeText}>Экспресс</Text>
+            </View>
+            <Text style={styles.trainNumber}>Поезд #9025</Text>
+            <Text style={styles.priceText}>15 600 ₸</Text>
+          </View>
+
+          <View style={styles.timelineRow}>
+            <View style={{ alignItems: 'flex-start' }}>
+              <Text style={styles.timeText}>10:24</Text>
+              <Text style={styles.stationText}>Нұрлы Жол</Text>
+            </View>
+
+            <View style={styles.durationBox}>
+              <Text style={styles.durationText}>2 сағ 12 мин</Text>
+              <View style={styles.lineWithIcon}>
+                <View style={styles.lineDot} />
+                <View style={styles.lineTrack} />
+                <Text style={styles.trainIconInline}>⚡</Text>
+                <View style={styles.lineTrack} />
+                <View style={styles.lineDot} />
+              </View>
+              <Text style={styles.directText}>Төте</Text>
+            </View>
+
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.timeText}>13:36</Text>
+              <Text style={styles.stationText}>Алматы 2</Text>
+            </View>
+          </View>
+
+          <View style={styles.cardDivider} />
+
+          <View style={styles.cardFooter}>
+            <View style={styles.amenitiesRow}>
+              <Text style={styles.amenityText}>⚡ Жоғары жылдамдықты Wi-Fi</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.bookNowBtn}
+              onPress={() => navigation.navigate('SeatSelection')}
+            >
+              <Text style={styles.bookNowText}>Брондау</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Промо карточки снизу */}
+        <View style={styles.promoRow}>
+          <View style={styles.promoCardBlue}>
+            <Text style={styles.promoIcon}>🛡️</Text>
+            <Text style={styles.promoTitle}>Сапарды қорғау</Text>
+            <Text style={styles.promoDesc}>Сапарыңызды бары-жоғы 450 ₸ сақтандырыңыз</Text>
+          </View>
+
+          <View style={styles.promoCardOrange}>
+            <Text style={styles.promoIcon}>🎖️</Text>
+            <Text style={styles.promoTitle}>1-ші класс</Text>
+            <Text style={styles.promoDesc}>Қосымша орын және тегін тағамдар</Text>
+          </View>
+        </View>
 
       </ScrollView>
     </SafeAreaView>
@@ -482,142 +240,288 @@ export default function SearchResultsScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#12151c' },
-  container: { padding: 16 },
-  searchBox: {
-    backgroundColor: '#1c212c',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#2a313f',
+  container: {
+    flex: 1,
+    backgroundColor: '#F4F6F9',
   },
-  label: { fontSize: 12, fontWeight: '600', color: '#0dcaf0', marginBottom: 4 },
-  labelRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  clearText: { fontSize: 11, color: '#ff6b6b' },
-  input: {
-    backgroundColor: '#12151c',
-    color: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: '#343d4e',
-    fontSize: 14,
-    marginBottom: 10,
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 110,
   },
-  rowDates: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  dateCol: { width: '48%' },
-  dateSelector: {
-    backgroundColor: '#12151c',
-    borderRadius: 8,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#343d4e',
-  },
-  dateText: { color: '#fff', fontSize: 13 },
-  searchBtn: {
-    backgroundColor: '#0dcaf0',
-    borderRadius: 8,
-    paddingVertical: 12,
+  topHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 20,
   },
-  searchBtnText: { color: '#12151c', fontWeight: 'bold', fontSize: 15 },
-
-  filterCard: {
-    backgroundColor: '#1c212c',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#2a313f',
+  hamburgerIcon: {
+    fontSize: 22,
+    color: '#0F2C59',
   },
-  filterTitle: { color: '#fff', fontWeight: 'bold', marginBottom: 8, fontSize: 14 },
-  checkboxRow: { flexDirection: 'row', gap: 20 },
-  checkItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  checkbox: { color: '#0dcaf0', fontSize: 16 },
-  filterText: { color: '#fff', fontSize: 13 },
-
-  ribbonContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  ribbonScroll: { gap: 8 },
-  ribbonArrow: {
-    paddingHorizontal: 10,
-    paddingVertical: 14,
-    backgroundColor: '#1c212c',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#343d4e',
+  brandTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0F2C59',
+  },
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  arrowText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  ribbonItem: {
-    backgroundColor: '#1c212c',
-    borderRadius: 8,
-    padding: 10,
-    minWidth: 120,
+  routeHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333',
+    marginBottom: 16,
   },
-  ribbonActive: { backgroundColor: '#0dcaf0', borderColor: '#0dcaf0' },
-  ribbonDayText: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  ribbonPriceText: { color: '#8e929b', fontSize: 11, marginTop: 4 },
-  ribbonActiveText: { color: '#12151c', fontWeight: 'bold' },
-
-  trainsCountTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
-  alertBox: { backgroundColor: '#1c212c', padding: 20, borderRadius: 10, alignItems: 'center' },
-  alertText: { color: '#ffc107', fontSize: 14 },
-
-  trainCard: {
-    backgroundColor: '#1c212c',
+  routeDateText: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  routeCitiesText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#0F2C59',
+    marginVertical: 2,
+  },
+  routeSubText: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  modifyBtn: {
+    backgroundColor: '#0F2C59',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  modifyBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  filtersScroll: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  filterBtn: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#2a313f',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginRight: 10,
   },
-  trainHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  trainBadge: { backgroundColor: '#6c757d', color: '#fff', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, fontSize: 12, fontWeight: 'bold' },
-  trainName: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  trainTimesRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  timeText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  cityText: { color: '#8e929b', fontSize: 11 },
-  durationCol: { flex: 1, alignItems: 'center', paddingHorizontal: 10 },
-  durationText: { color: '#8e929b', fontSize: 10, marginBottom: 4 },
-  durationLine: { height: 2, backgroundColor: '#0dcaf0', width: '100%' },
-
-  carriagesRow: { flexDirection: 'row', gap: 10 },
-  carriageBox: {
-    flex: 1,
-    backgroundColor: '#212529',
-    borderRadius: 8,
-    padding: 10,
+  filterBtnActive: {
+    backgroundColor: '#0F2C59',
+    borderColor: '#0F2C59',
+  },
+  filterText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  filterTextActive: {
+    color: '#FFFFFF',
+  },
+  trainCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  fastestCard: {
+    borderWidth: 1.5,
+    borderColor: '#0F2C59',
+    overflow: 'hidden',
+  },
+  topRibbon: {
+    backgroundColor: '#0F2C59',
+    alignSelf: 'flex-end',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 10,
+    marginRight: -16,
+    marginTop: -16,
+  },
+  topRibbonText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  cardHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#444',
+    marginBottom: 16,
   },
-  carriageTitle: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-  carriagePrice: { color: '#0dcaf0', fontSize: 13, fontWeight: 'bold', marginTop: 4 },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', padding: 16 },
-  modalContent: { backgroundColor: '#1c212c', borderRadius: 16, padding: 16 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  oneWayBtn: { backgroundColor: '#0dcaf0', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  oneWayBtnText: { color: '#12151c', fontSize: 11, fontWeight: 'bold' },
-  monthTitle: { color: '#0dcaf0', textAlign: 'center', fontWeight: 'bold', marginBottom: 8 },
-  weekHeader: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 6 },
-  weekDayText: { color: '#6c757d', fontSize: 11, fontWeight: 'bold', width: '13%', textAlign: 'center' },
-  calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dayCellEmpty: { width: '14.28%', height: 36 },
-  dayCell: { width: '14.28%', height: 36, justifyContent: 'center', alignItems: 'center', borderRadius: 6, marginVertical: 2, opacity: 0.3 },
-  dayCellAvailable: { opacity: 1, backgroundColor: 'rgba(13, 202, 240, 0.15)' },
-  dayCellSelected: { backgroundColor: '#0dcaf0', opacity: 1 },
-  dayNumText: { color: '#fff', fontSize: 11, fontWeight: 'bold' },
-  dayNumTextUnavailable: { color: '#8e929b' },
-  priceText: { color: '#8e929b', fontSize: 7 },
-  dayTextSelected: { color: '#12151c' },
-  closeModalBtn: { backgroundColor: '#343d4e', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 12 },
-  closeModalBtnText: { color: '#fff', fontWeight: 'bold' },
+  expressBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  expressBadgeText: {
+    color: '#15803D',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  regionalBadge: {
+    backgroundColor: '#E0E7FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  regionalBadgeText: {
+    color: '#4338CA',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  trainNumber: {
+    fontSize: 12,
+    color: '#64748B',
+    flex: 1,
+  },
+  priceText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0F2C59',
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  timeText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1E293B',
+  },
+  stationText: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  durationBox: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  durationText: {
+    fontSize: 11,
+    color: '#64748B',
+    marginBottom: 4,
+  },
+  lineWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  lineTrack: {
+    flex: 1,
+    height: 2,
+    backgroundColor: '#CBD5E1',
+  },
+  lineDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#3B82F6',
+  },
+  stopDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444',
+  },
+  trainIconInline: {
+    fontSize: 12,
+    marginHorizontal: 4,
+  },
+  directText: {
+    fontSize: 11,
+    color: '#16A34A',
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  stopText: {
+    fontSize: 10,
+    color: '#64748B',
+    marginTop: 4,
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 12,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  amenitiesRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  amenityText: {
+    fontSize: 12,
+    color: '#475569',
+  },
+  selectLink: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#0F2C59',
+  },
+  bookNowBtn: {
+    backgroundColor: '#0F2C59',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  bookNowText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  promoRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  promoCardBlue: {
+    flex: 1,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 16,
+    padding: 14,
+  },
+  promoCardOrange: {
+    flex: 1,
+    backgroundColor: '#FFEDD5',
+    borderRadius: 16,
+    padding: 14,
+  },
+  promoIcon: {
+    fontSize: 20,
+    marginBottom: 8,
+  },
+  promoTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  promoDesc: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 15,
+  },
 });
