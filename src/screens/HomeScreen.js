@@ -10,6 +10,7 @@ import {
   StatusBar,
   Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen({ navigation }) {
   const [fromCity, setFromCity] = useState('');
@@ -25,12 +26,12 @@ export default function HomeScreen({ navigation }) {
         {/* Шапка: Гамбургер + Название + Аватар */}
         <View style={styles.topHeader}>
           <TouchableOpacity style={styles.iconBtn}>
-            <Text style={styles.hamburgerIcon}>☰</Text>
+            <Ionicons name="menu-outline" size={24} color="#003d9b" />
           </TouchableOpacity>
           <Text style={styles.brandTitle}>Railway Connect</Text>
           <TouchableOpacity onPress={() => navigation.navigate('ProfileTab')}>
             <View style={styles.avatarPlaceholder}>
-              <Text style={{ fontSize: 16 }}>👤</Text>
+              <Ionicons name="person" size={18} color="#003d9b" />
             </View>
           </TouchableOpacity>
         </View>
@@ -47,55 +48,65 @@ export default function HomeScreen({ navigation }) {
             {/* Графика линии маршрута слева */}
             <View style={styles.routeLineColumn}>
               <View style={styles.startDot}>
-                <Text style={styles.dotIcon}>📍</Text>
+                <Ionicons name="location" size={12} color="#FFFFFF" />
               </View>
               <View style={styles.verticalLine} />
               <View style={styles.endDot}>
-                <Text style={styles.dotIcon}>🗺️</Text>
+                <Ionicons name="map-outline" size={12} color={"#003d9b"} />
               </View>
             </View>
 
             {/* Инпуты маршрута */}
-            <View style={styles.inputsColumn}>
-              <View style={styles.fieldBox}>
-                <Text style={styles.fieldLabel}>Шығатын орын</Text>
-                <TextInput
-                  style={styles.fieldInput}
-                  placeholder="Қайдан?"
-                  placeholderTextColor="#94A3B8"
-                  value={fromCity}
-                  onChangeText={setFromCity}
-                />
-              </View>
+            <View style={styles.inputsColumn}>  
 
-              <View style={styles.fieldBox}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.fieldLabel}>Шығатын орын</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Қайдан?"
+                    placeholderTextColor="#6b7280"
+                    value={fromCity}
+                    onChangeText={setFromCity}
+                  />
+              </View>
+            </View>
+
+              <View style={styles.inputGroup}>
                 <Text style={styles.fieldLabel}>Баратын орын</Text>
-                <TextInput
-                  style={styles.fieldInput}
-                  placeholder="Қайда?"
-                  placeholderTextColor="#94A3B8"
-                  value={toCity}
-                  onChangeText={setToCity}
-                />
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Қайда?"
+                    placeholderTextColor="#6b7280"
+                    value={toCity}
+                    onChangeText={setToCity}
+                  />
+                </View>
               </View>
             </View>
           </View>
 
           {/* Дата и Количество пассажиров в один ряд */}
           <View style={styles.rowFields}>
-            <View style={[styles.fieldBox, { flex: 1, marginRight: 6 }]}>
-              <Text style={styles.fieldLabel}>Кету күні</Text>
-              <View style={styles.pickerBox}>
-                <Text style={styles.pickerText}>{departDate}</Text>
-                <Text style={styles.pickerIcon}>📅</Text>
-              </View>
-            </View>
 
-            <View style={[styles.fieldBox, { flex: 1, marginLeft: 6 }]}>
+              <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+                <Text style={styles.fieldLabel}>Кету күні</Text>
+                <View style={styles.pickerBox}>
+                  <Text style={styles.pickerText}>{departDate}</Text>
+                  <View style={{ top: -1}}>
+                    <Ionicons name="calendar-outline" size={20} color="#003d9b" />
+                  </View>
+                </View>
+              </View>
+
+            <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
               <Text style={styles.fieldLabel}>Жолаушылар</Text>
               <View style={styles.pickerBox}>
                 <Text style={styles.pickerText}>{travelers}</Text>
-                <Text style={styles.pickerIcon}>👥</Text>
+                <View style={{ top: -1}}>
+                  <Ionicons name="people-outline" size={20} color="#003d9b" />
+                </View>
               </View>
             </View>
           </View>
@@ -105,7 +116,8 @@ export default function HomeScreen({ navigation }) {
             style={styles.findButton}
             onPress={() => navigation.navigate('SearchResults', { fromCity, toCity })}
           >
-            <Text style={styles.findButtonText}>🔍 Поездарды табу</Text>
+            <Ionicons name="search" size={18} color="#FFFFFF" style={{ marginRight: 8}} />
+            <Text style={styles.findButtonText}>Поездарды табу</Text>
           </TouchableOpacity>
         </View>
 
@@ -119,24 +131,24 @@ export default function HomeScreen({ navigation }) {
 
         <TouchableOpacity style={styles.recentItem}>
           <View style={styles.recentIconBox}>
-            <Text style={styles.recentIcon}>🕒</Text>
+            <Ionicons name="time-outline" size={18} color="#003d9b" />
           </View>
           <View style={styles.recentInfo}>
             <Text style={styles.recentRoute}>Лондон Кингс Кросс ➔ Эдинбург</Text>
             <Text style={styles.recentSub}>Ертең, 1 Ересек</Text>
           </View>
-          <Text style={styles.arrowIcon}>›</Text>
+          <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.recentItem}>
           <View style={styles.recentIconBox}>
-            <Text style={styles.recentIcon}>🕒</Text>
+            <Ionicons name="time-outline" size={18} color="#003d9b" />
           </View>
           <View style={styles.recentInfo}>
             <Text style={styles.recentRoute}>Манчестер ➔ Лондон Юстон</Text>
             <Text style={styles.recentSub}>24 Қаз, 2 Ересек</Text>
           </View>
-          <Text style={styles.arrowIcon}>›</Text>
+          <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
         </TouchableOpacity>
 
         {/* Секция: Танымал бағыттар */}
@@ -170,7 +182,7 @@ export default function HomeScreen({ navigation }) {
 
         {/* Информационный баннер статуса */}
         <View style={styles.statusBanner}>
-          <Text style={styles.bannerIcon}>ℹ️</Text>
+          <Ionicons name="information-circle-outline" size={22} color="#065F46" />
           <View style={{ flex: 1, marginLeft: 10 }}>
             <Text style={styles.bannerTitle}>Барлық желілерде қалыпты қызмет</Text>
             <Text style={styles.bannerSub}>Қазіргі уақытта ірі кешігулер тіркелген жоқ. Қауіпсіз сапар!</Text>
@@ -252,23 +264,25 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#003d9b',
     justifyContent: 'center',
     alignItems: 'center',
   },
   verticalLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#003d9b',
     marginVertical: 4,
   },
   endDot: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5, 
+    borderColor: '#003d9b',
   },
   dotIcon: {
     fontSize: 12,
@@ -286,16 +300,27 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   fieldLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
-    marginBottom: 2,
+    color: '#4f515e',
+    marginBottom: 4,
   },
   fieldInput: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1E293B',
     padding: 0,
+  },
+  inputGroup: {
+    marginBottom: 10,
+  },
+  inputContainer: {
+    backgroundColor: '#f1f3ff',
+    borderWidth: 1,
+    borderColor: '#c3c6d6',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8, 
   },
   rowFields: {
     flexDirection: 'row',
@@ -305,6 +330,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: '#f1f3ff',
+    borderWidth: 1,           
+    borderColor: '#c3c6d6',       
+    borderRadius: 12,          
+    paddingHorizontal: 12,      
+    paddingVertical: 10,
   },
   pickerText: {
     fontSize: 13,
@@ -315,10 +346,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   findButton: {
-    backgroundColor: '#0F2C59',
+    backgroundColor: '#003d9b',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: "center",
   },
   findButtonText: {
     color: '#FFFFFF',
@@ -338,7 +371,7 @@ const styles = StyleSheet.create({
   },
   clearLink: {
     fontSize: 13,
-    color: '#3B82F6',
+    color: '#1048a1',
     fontWeight: '600',
   },
   recentItem: {
@@ -353,7 +386,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#a9c3f0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -417,11 +450,11 @@ const styles = StyleSheet.create({
   cardPrice: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#10B981',
+    color: '#60a38c',
   },
   statusBanner: {
     flexDirection: 'row',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#e1f9f2',
     borderWidth: 1,
     borderColor: '#A7F3D0',
     borderRadius: 16,
