@@ -30,7 +30,7 @@ export default function OnboardingScreen({ navigation }) {
       setCurrentStep(nextStep);
       animateDots(nextStep);
     } else {
-      navigation.replace("Login");
+      navigation.replace("Login", { initialTab: 'signup' }); // 👈 Переходим сразу на регистрацию
     }
   };
   const slid = [
@@ -58,7 +58,7 @@ export default function OnboardingScreen({ navigation }) {
       {/* Шапка */}
       <View style={styles.header}>
         <Text style={styles.brandTitle}>Railway Connect</Text>
-        <TouchableOpacity onPress={() => navigation.replace('Login')}>
+        <TouchableOpacity onPress={() => navigation.replace('Login', { initialTab: 'signup' })}>
           <Text style={styles.skipText}>Өткізу</Text>
         </TouchableOpacity>
       </View>
@@ -68,7 +68,6 @@ export default function OnboardingScreen({ navigation }) {
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: slid[currentStep].imd}}
-            ///https://www.shutterstock.com/image-photo/outdoor-photo-futuristic-highspeed-train-260nw-2751449751.jpg
             style={styles.trainImage}
             resizeMode="contain"
           />
@@ -109,7 +108,7 @@ export default function OnboardingScreen({ navigation }) {
 
         <View style={styles.loginRow}>
           <Text style={styles.accountText}>Аккаунтыңыз бар ма? </Text>
-          <TouchableOpacity onPress={() => navigation.replace('Login')}>
+          <TouchableOpacity onPress={() => navigation.replace('Login', { initialTab: 'login' })}>
             <Text style={styles.loginLink}>Кіру</Text>
           </TouchableOpacity>
         </View>
@@ -166,18 +165,6 @@ const styles = StyleSheet.create({
   trainImage: {
     width: "85%",
     height: "85%",
-  },
-  trainPlaceholder: {
-    alignItems: 'center',
-  },
-  trainEmoji: {
-    fontSize: 64,
-    marginBottom: 8,
-  },
-  imagePlaceholderText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
   },
   title: {
     fontSize: 26,

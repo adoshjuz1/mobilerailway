@@ -9,12 +9,49 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Modal,
 } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
 
-export default function LoginScreen({ navigation }) {
-  const [activeTab, setActiveTab] = useState('login');
+export default function LoginScreen({ route, navigation }) {
+  const initialTab = route?.params?.initialTab || 'login';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Состояния для модального окна восстановления пароля
+  const [forgotModalVisible, setForgotModalVisible] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+
+  // Функция проверки полей перед входом/регистрацией
+  const handleSubmit = () => {
+    if (activeTab === 'signup') {
+      if (!name.trim() || !email.trim() || !password.trim()) {
+        Alert.alert('Қате', 'Барлық өрістерді толтырыңыз!');
+        return;
+      }
+    } else {
+      if (!email.trim() || !password.trim()) {
+        Alert.alert('Қате', 'Электронды пошта мен құпия сөзді жазыңыз!');
+        return;
+      }
+    }
+    navigation.replace('Main');
+  };
+
+  // Функция отправки запроса на восстановление пароля
+  const handlePasswordReset = () => {
+    if (!forgotEmail.trim()) {
+      Alert.alert('Қате', 'Электронды поштаңызды енгізіңіз!');
+      return;
+    }
+    Alert.alert('Сәтті', 'Құпия сөзді қалпына келтіру сілтемесі поштаңызға жіберілді!');
+    setForgotEmail('');
+    setForgotModalVisible(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -47,17 +84,23 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.welcomeText}>Қайта оралуыңызбен</Text>
-            <Text style={styles.subWelcomeText}>Сапарлар мен билеттерді басқару үшін кіріңіз.</Text>
+            <Text style={styles.welcomeText}>
+              {activeTab === 'login' ? 'Қайта оралуыңызбен' : 'Тіркелу'}
+            </Text>
+            <Text style={styles.subWelcomeText}>
+              {activeTab === 'login' 
+                ? 'Сапарлар мен билеттерді басқару үшін кіріңіз.' 
+                : 'Жаңа аккаунт ашып, барлық мүмкіндіктерді пайдаланыңыз.'}
+            </Text>
 
             {/* Кнопки соцсетей Google / Apple */}
             <View style={styles.socialRow}>
               <TouchableOpacity style={styles.socialBtn}>
-                <Text style={styles.socialIcon}>🌐</Text>
+                <Ionicons name="logo-google" size={18} color="#EA4335" style={{ marginRight: 8 }} />
                 <Text style={styles.socialText}>Google</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.socialBtn}>
-                <Text style={styles.socialIcon}>🍎</Text>
+                <Ionicons name="logo-apple" size={18} color="#000000" style={{ marginRight: 8 }} />
                 <Text style={styles.socialText}>Apple</Text>
               </TouchableOpacity>
             </View>
@@ -69,11 +112,28 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.line} />
             </View>
 
+            {/* Имя (только для регистрации) */}
+            {activeTab === 'signup' && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Аты-жөні</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="person-outline" size={18} color="#94A3B8" style={{ marginRight: 10 }} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Атыңызды енгізіңіз"
+                    placeholderTextColor="#A0AEC0"
+                    value={name}
+                    onChangeText={setName}
+                  />
+                </View>
+              </View>
+            )}
+
             {/* Почта */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Электронды пошта</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputPrefix}>✉️</Text>
+                <Ionicons name="mail-outline" size={18} color="#94A3B8" style={{ marginRight: 10 }} />
                 <TextInput
                   style={styles.input}
                   placeholder="name@example.com"
@@ -85,81 +145,145 @@ export default function LoginScreen({ navigation }) {
               </View>
             </View>
 
-            {/* Пароль */}
-            <View style={styles.inputGroup}>
+            {/* Заголовок пароля + "Забыли пароль?" на одной линии */}
+            <View style={styles.passwordHeaderRow}>
               <Text style={styles.label}>Құпия сөз</Text>
+              {activeTab === 'login' && (
+                <TouchableOpacity 
+                  onPress={() => setForgotModalVisible(true)}
+                  activeOpacity={0.6}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
+                  <Text style={styles.forgotText}>Құпия сөзді ұмытыңыз ба?</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Поле ввода пароля */}
+            <View style={styles.inputGroup}>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputPrefix}>🔒</Text>
+                <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={{ marginRight: 10 }} />
                 <TextInput
                   style={styles.input}
                   placeholder="••••••••"
                   placeholderTextColor="#A0AEC0"
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
                 />
-                <Text style={styles.inputSuffix}>👁️</Text>
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons 
+                    name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                    size={18} 
+                    color="#94A3B8" 
+                    style={{ marginLeft: 10 }} 
+                  />
+                </TouchableOpacity>
               </View>
             </View>
 
-            {/* Забыли пароль */}
-            <TouchableOpacity style={styles.forgotContainer}>
-              <Text style={styles.forgotText}>Құпия сөзді ұмытыңыз ба?</Text>
-            </TouchableOpacity>
-
-            {/* Кнопка входа */}
+            {/* Кнопка входа / регистрации с проверкой */}
             <TouchableOpacity 
               style={styles.submitButton} 
-              onPress={() => navigation.replace('Main')}
+              onPress={handleSubmit}
             >
-              <Text style={styles.submitButtonText}>Кіру ➔</Text>
+              <Text style={styles.submitButtonText}>
+                {activeTab === 'login' ? 'Кіру ➔' : 'Тіркелу ➔'}
+              </Text>
             </TouchableOpacity>
 
-            {/* Ссылка на создание аккаунта */}
+            {/* Ссылка на создание аккаунта в самом низу карточки */}
             <View style={styles.footerRow}>
-              <Text style={styles.noAccountText}>Аккаунтыңыз жоқ па? </Text>
-              <TouchableOpacity>
-                <Text style={styles.createAccountLink}>Тіркелу</Text>
-              </TouchableOpacity>
+              <Text style={styles.noAccountText}>
+                {activeTab === 'login' ? 'Аккаунтыңыз жоқ па? ' : 'Аккаунтыңыз бар ма? '}
+              </Text>
             </View>
+
+            <TouchableOpacity onPress={() => setActiveTab(activeTab === 'login' ? 'signup' : 'login')}>
+              <Text style={styles.createAccountLink}>
+                {activeTab === 'login' ? 'Тіркелу' : 'Кіру'}
+              </Text>
+            </TouchableOpacity>
 
           </View>
 
-          {/* Преимущества снизу из макета */}
+          {/* Преимущества снизу */}
           <View style={styles.featuresContainer}>
             <View style={styles.featureCard}>
               <View style={[styles.featureIconBox, { backgroundColor: '#E0F2FE' }]}>
-                <Text>🛡️</Text>
+                <Ionicons name="shield-checkmark" size={24} color="#0284c7" />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.featureTitle}>Қауіпсіз қолжетімділік</Text>
-                <Text style={styles.featureDesc}>Жеке деректеріңіз мен төлем әдістеріңіз қорғалған.</Text>
-              </View>
+              <Text style={styles.featureTitle}>Қауіпсіз қолжетімділік</Text>
+              <Text style={styles.featureDesc}>Жеке деректеріңіз мен төлем әдістеріңіз қорғалған.</Text>
             </View>
 
             <View style={styles.featureCard}>
               <View style={[styles.featureIconBox, { backgroundColor: '#DCFCE7' }]}>
-                <Text>🎫</Text>
+                <Ionicons name="ticket" size={24} color="#16a34a" />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.featureTitle}>Смарт билеттер</Text>
-                <Text style={styles.featureDesc}>Вокзалда офлайн режимде де QR-кодқа қол жеткізіңіз.</Text>
-              </View>
+              <Text style={styles.featureTitle}>Смарт билеттер</Text>
+              <Text style={styles.featureDesc}>Вокзалда офлайн режимде де QR-кодқа қол жеткізіңіз.</Text>
             </View>
 
             <View style={styles.featureCard}>
               <View style={[styles.featureIconBox, { backgroundColor: '#FEF3C7' }]}>
-                <Text>🔔</Text>
+                <Ionicons name="notifications" size={24} color="#d97706" />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.featureTitle}>Жедел хабарламалар</Text>
-                <Text style={styles.featureDesc}>Платформа өзгерістері мен кешігулер туралы бірінші болып біліңіз.</Text>
-              </View>
+              <Text style={styles.featureTitle}>Жедел хабарламалар</Text>
+              <Text style={styles.featureDesc}>Платформа өзгерістері мен кешігулер туралы бірінші болып біліңіз.</Text>
             </View>
           </View>
 
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Модальное окно восстановления пароля */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={forgotModalVisible}
+        onRequestClose={() => setForgotModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Құпия сөзді қалпына келтіру</Text>
+              <TouchableOpacity onPress={() => setForgotModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#434654" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalSubText}>
+              Тіркелген электронды поштаңызды енгізіңіз, біз сізге құпия сөзді өзгерту сілтемесін жібереміз.
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Электронды пошта</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={18} color="#94A3B8" style={{ marginRight: 10 }} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="name@example.com"
+                  placeholderTextColor="#A0AEC0"
+                  value={forgotEmail}
+                  onChangeText={setForgotEmail}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.submitButton} 
+              onPress={handlePasswordReset}
+            >
+              <Text style={styles.submitButtonText}>Жіберу</Text>
+            </TouchableOpacity>
+
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -171,19 +295,21 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   brandTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#0F2C59',
+    color: '#003d9b',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 20,
-    marginBottom: 24,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    marginBottom: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -192,43 +318,43 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#f1f3ff',
     borderRadius: 12,
     padding: 4,
-    marginBottom: 18,
+    marginBottom: 20,
   },
   tabButton: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
     borderRadius: 10,
   },
   activeTab: {
-    backgroundColor: '#0F2C59',
+    backgroundColor: '#003d9b',
   },
   tabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#64748B',
+    color: '#434654',
   },
   activeTabText: {
     color: '#FFFFFF',
   },
   welcomeText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 4,
+    color: '#041b3c',
+    marginBottom: 6,
   },
   subWelcomeText: {
-    fontSize: 12,
-    color: '#64748B',
-    marginBottom: 16,
+    fontSize: 13,
+    color: '#434654',
+    marginBottom: 20,
   },
   socialRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   socialBtn: {
     flex: 1,
@@ -236,15 +362,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 4,
     backgroundColor: '#FFFFFF',
-  },
-  socialIcon: {
-    fontSize: 16,
-    marginRight: 6,
   },
   socialText: {
     fontSize: 13,
@@ -254,7 +376,7 @@ const styles = StyleSheet.create({
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 14,
+    marginVertical: 16,
   },
   line: {
     flex: 1,
@@ -263,18 +385,24 @@ const styles = StyleSheet.create({
   },
   orText: {
     paddingHorizontal: 8,
-    fontSize: 9,
+    fontSize: 13,
     fontWeight: '700',
     color: '#94A3B8',
   },
   inputGroup: {
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  passwordHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   label: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#475569',
-    marginBottom: 6,
+    color: '#434654',
+    marginBottom: 6, // 👈 Возвращен четкий отступ снизу от текста до поля
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -283,37 +411,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 12,
-    paddingHorizontal: 12,
-  },
-  inputPrefix: {
-    fontSize: 14,
-    marginRight: 8,
+    paddingHorizontal: 14,
   },
   input: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontSize: 14,
     color: '#1E293B',
   },
-  inputSuffix: {
-    fontSize: 14,
-    marginLeft: 8,
-  },
-  forgotContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 18,
-  },
   forgotText: {
     fontSize: 12,
-    color: '#0F2C59',
+    color: '#003d9b',
     fontWeight: '600',
+    marginBottom: 7,
   },
   submitButton: {
-    backgroundColor: '#0F2C59',
+    backgroundColor: '#013d9b',
     borderRadius: 12,
-    paddingVertical: 15,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    marginTop: 10,
   },
   submitButtonText: {
     color: '#FFFFFF',
@@ -326,22 +444,23 @@ const styles = StyleSheet.create({
   },
   noAccountText: {
     fontSize: 12,
-    color: '#64748B',
+    color: '#434654',
   },
   createAccountLink: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0F2C59',
+    color: '#003d9b',
+    marginLeft: 130,
   },
   featuresContainer: {
-    gap: 12,
+    gap: 16,
   },
   featureCard: {
-    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
-    alignItems: 'center',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -349,21 +468,61 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   featureIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 16,
   },
   featureTitle: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: 'bold',
-    color: '#1E293B',
-    marginBottom: 2,
+    color: '#0F2C59',
+    marginBottom: 6,
+    textAlign: 'left',
   },
   featureDesc: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#64748B',
-    lineHeight: 15,
+    lineHeight: 18,
+    textAlign: 'left',
+  },
+  // Стили для модального окна
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 6,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#041b3c',
+  },
+  modalSubText: {
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
+    marginBottom: 20,
   },
 });
