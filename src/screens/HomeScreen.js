@@ -209,14 +209,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  hamburgerIcon: {
-    fontSize: 22,
-    color: '#0F2C59',
-  },
   brandTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#0F2C59',
+    color: '#003d9b',
   },
   avatarPlaceholder: {
     width: 36,
