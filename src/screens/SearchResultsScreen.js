@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,61 +10,113 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Header from '../components/Header';
 import { searchTrains } from '../services/api';
+import { USE_MOCK_TRAINS, getMockTrains } from '../services/mockTrains';
+
+const DAYS = ['Жексенбі', 'Дүйсенбі', 'Сейсенбі', 'Сәрсенбі', 'Бейсенбі', 'Жұма', 'Сенбі'];
+const MONTHS = ['Қаң', 'Ақп', 'Нау', 'Сәу', 'Мам', 'Мау', 'Шіл', 'Там', 'Қыр', 'Қаз', 'Қар', 'Жел'];
+
+// 2026-10-16 -> «Жұма, 16 Қаз»
+const formatDateKazakh = (dateString) => {
+  try {
+    const [year, month, day] = dateString.split('-');
+    const dateObj = new Date(year, month - 1, day);
+    return `${DAYS[dateObj.getDay()]}, ${day} ${MONTHS[dateObj.getMonth()]}`;
+  } catch (e) {
+    return dateString;
+  }
+};
+
+const FILTERS = [
+  { id: 'cheapest', label: 'Ең арзан', icon: 'flash-outline' },
+  { id: 'fastest', label: 'Ең жылдам', icon: 'rocket-outline' },
+  { id: 'earliest', label: 'Ең ерте', icon: 'sunny-outline' },
+];
+
+const timeToMinutes = (time) => {
+  const [h, m] = (time || '0:0').split(':').map(Number);
+  return h * 60 + (m || 0);
+};
+
+// Длительность в минутах: сначала из duration_text, иначе по времени отправления и прибытия
+const getDurationMinutes = (train) => {
+  const text = train.duration_text || '';
+  const num = (re) => {
+    const match = text.match(re);
+    return match ? parseInt(match[1], 10) : 0;
+  };
+  const total =
+    num(/(\d+)\s*(?:күн|тәул|д)/i) * 1440 +
+    num(/(\d+)\s*(?:сағ|ч|h)/i) * 60 +
+    num(/(\d+)\s*(?:мин|м|m)/i);
+  if (total > 0) return total;
+
+  let diff = timeToMinutes(train.arrival_time) - timeToMinutes(train.departure_time);
+  if (diff <= 0) diff += 1440;
+  return diff;
+};
 
 export default function SearchResultsScreen({ route, navigation }) {
   const { fromCity = 'Алматы', toCity = 'Атырау', date = '2026-10-16' } = route.params || {};
 
-  const formatdatakazakh = (dateString) => {
-    try {
-      const [year, month, day] = dateString.split('-');
-      const dateObj = new Date(year, month - 1, day);
-      const days = ['Жексенбі', 'Дүйсенбі', 'Сейсенбі', 'Сәрсенбі', 'Бейсенбі', 'Жұма', 'Сенбі'];
-      const months = ['Қаз', 'Ақп', 'Нау', 'Сәу', 'Мам', 'Мау', 'Шіл', 'Там', 'Қыр', 'Қаз', 'Қар', 'Жел'];
-      const dayOfWeek = days[dateObj.getDay()];
-      const monthName = months[dateObj.getMonth()];
-      return `${dayOfWeek}, ${day} ${monthName}`;
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  const formatdata = formatdatakazakh(date);
   const [activeFilter, setActiveFilter] = useState('cheapest');
   const [trains, setTrains] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadTrainsData() {
       setLoading(true);
-      const data = await searchTrains(fromCity, toCity, date);
-      setTrains(data);
-      setLoading(false);
+      setError(false);
+      try {
+        const data = USE_MOCK_TRAINS
+          ? getMockTrains(fromCity, toCity)
+          : await searchTrains(fromCity, toCity, date);
+        if (!cancelled) setTrains(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!cancelled) {
+          setTrains([]);
+          setError(true);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
+
     loadTrainsData();
-  }, [fromCity, toCity, date]);
+    return () => {
+      cancelled = true;
+    };
+  }, [fromCity, toCity, date, reloadKey]);
+
+  const sortedTrains = useMemo(() => {
+    const list = [...trains];
+    if (activeFilter === 'cheapest') {
+      list.sort((a, b) => Number(a.min_price) - Number(b.min_price));
+    } else if (activeFilter === 'fastest') {
+      list.sort((a, b) => getDurationMinutes(a) - getDurationMinutes(b));
+    } else {
+      list.sort((a, b) => timeToMinutes(a.departure_time) - timeToMinutes(b.departure_time));
+    }
+    return list;
+  }, [trains, activeFilter]);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
-      
-      <View style={styles.topHeader}>
-        <TouchableOpacity style={styles.iconBtn}>
-          <Ionicons name="menu-outline" size={24} color="#003d9b" />
-        </TouchableOpacity>
-        <Text style={styles.brandTitle}>Railway Connect</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('ProfileTab')}>
-          <View style={styles.avatarPlaceholder}>
-            <Ionicons name="person" size={18} color="#003d9b" />
-          </View>
-        </TouchableOpacity>
+
+      <View style={styles.headerWrap}>
+        <Header onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
         <View style={styles.routeHeader}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.routeDateText}>{formatdata}</Text>
+            <Text style={styles.routeDateText}>{formatDateKazakh(date)}</Text>
             <Text style={styles.routeCitiesText}>{fromCity} ➔ {toCity}</Text>
             <Text style={styles.routeSubText}>Табылған поездар саны: {trains.length}</Text>
           </View>
@@ -79,102 +131,103 @@ export default function SearchResultsScreen({ route, navigation }) {
             <Text style={styles.filterText}>Сүзгілер</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.filterBtn, activeFilter === 'cheapest' && styles.filterBtnActive]}
-            onPress={() => setActiveFilter('cheapest')}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="flash-outline" size={14} color={activeFilter === 'cheapest' ? '#FFFFFF' : '#334155'} style={{ marginRight: 4 }} />
-              <Text style={[styles.filterText, activeFilter === 'cheapest' && styles.filterTextActive]}>
-                Ең арзан
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.filterBtn, activeFilter === 'fastest' && styles.filterBtnActive]}
-            onPress={() => setActiveFilter('fastest')}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="rocket-outline" size={14} color={activeFilter === 'fastest' ? '#FFFFFF' : '#334155'} style={{ marginRight: 4 }} />
-              <Text style={[styles.filterText, activeFilter === 'fastest' && styles.filterTextActive]}>
-                Ең жылдам
-              </Text>
-            </View>
-          </TouchableOpacity>
+          {FILTERS.map((filter) => {
+            const active = activeFilter === filter.id;
+            return (
+              <TouchableOpacity
+                key={filter.id}
+                style={[styles.filterBtn, active && styles.filterBtnActive]}
+                onPress={() => setActiveFilter(filter.id)}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons
+                    name={filter.icon}
+                    size={14}
+                    color={active ? '#FFFFFF' : '#334155'}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={[styles.filterText, active && styles.filterTextActive]}>{filter.label}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         {loading ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color="#003d9b" />
-            <Text style={{ marginTop: 10, color: '#64748B' }}>Поезда жүктелуде...</Text>
+            <Text style={styles.centerText}>Поезда жүктелуде...</Text>
           </View>
-        ) : trains.length === 0 ? (
+        ) : error ? (
           <View style={styles.centerContainer}>
-            <Text style={{ color: '#64748B', fontSize: 14 }}>Өкінішке орай, бұл бағытқа поездар табылмады.</Text>
+            <Ionicons name="cloud-offline-outline" size={32} color="#94A3B8" />
+            <Text style={styles.centerText}>Деректерді жүктеу мүмкін болмады.</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={() => setReloadKey((k) => k + 1)}>
+              <Text style={styles.retryBtnText}>Қайталау</Text>
+            </TouchableOpacity>
+          </View>
+        ) : sortedTrains.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <Text style={styles.centerText}>Өкінішке орай, бұл бағытқа поездар табылмады.</Text>
           </View>
         ) : (
-          trains.map((item) => {
-            return (
-              <View key={item.id} style={styles.trainCard}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.expressBadge}>
-                    <Text style={styles.expressBadgeText}>
-                      {item.category || 'Express'}
-                    </Text>
-                  </View>
-                  <Text style={styles.trainNumber}>Поезд #{item.number} ({item.name})</Text>
-                  <Text style={styles.priceText}>{item.min_price} ₸</Text>
+          sortedTrains.map((item) => (
+            <View key={item.id} style={styles.trainCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.expressBadge}>
+                  <Text style={styles.expressBadgeText}>{item.category || 'Express'}</Text>
+                </View>
+                <Text style={styles.trainNumber}>Поезд #{item.number} ({item.name})</Text>
+                <Text style={styles.priceText}>{item.min_price} ₸</Text>
+              </View>
+
+              <View style={styles.timelineRow}>
+                <View style={{ alignItems: 'flex-start' }}>
+                  <Text style={styles.timeText}>{item.departure_time}</Text>
+                  <Text style={styles.stationText}>{item.from_city}</Text>
                 </View>
 
-                <View style={styles.timelineRow}>
-                  <View style={{ alignItems: 'flex-start' }}>
-                    <Text style={styles.timeText}>{item.departure_time}</Text>
-                    <Text style={styles.stationText}>{item.from_city}</Text>
+                <View style={styles.durationBox}>
+                  <Text style={styles.durationText}>{item.duration_text}</Text>
+                  <View style={styles.lineWithIcon}>
+                    <View style={styles.lineDot} />
+                    <View style={styles.lineTrack} />
+                    <Ionicons name="train" size={14} color="#003d9b" style={{ marginHorizontal: 4 }} />
+                    <View style={styles.lineTrack} />
+                    <View style={styles.lineDot} />
                   </View>
-
-                  <View style={styles.durationBox}>
-                    <Text style={styles.durationText}>{item.duration_text}</Text>
-                    <View style={styles.lineWithIcon}>
-                      <View style={styles.lineDot} />
-                      <View style={styles.lineTrack} />
-                      <Ionicons name="train" size={14} color="#003d9b" style={{ marginHorizontal: 4 }} />
-                      <View style={styles.lineTrack} />
-                      <View style={styles.lineDot} />
-                    </View>
-                    <Text style={styles.directText}>Төте</Text>
-                  </View>
-
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.timeText}>{item.arrival_time}</Text>
-                    <Text style={styles.stationText}>{item.to_city}</Text>
-                  </View>
+                  <Text style={styles.directText}>Төте</Text>
                 </View>
 
-                <View style={styles.cardDivider} />
-
-                <View style={styles.cardFooter}>
-                  <View style={styles.amenitiesRow}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Ionicons name="wifi" size={17} color="#475569" style={{ marginRight: 4 }} />
-                      <Text style={styles.amenityText}>Wi-Fi</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Ionicons name="flash-outline" size={17} color="#475569" style={{ marginRight: 4 }} />
-                      <Text style={styles.amenityText}>Розетка</Text>
-                    </View>
-                  </View>
-
-                  <TouchableOpacity 
-                    style={styles.selectBtn}
-                    onPress={() => navigation.navigate('TrainDetails', { train: item })}
-                  >
-                    <Text style={styles.selectBtnText}>Таңдау ›</Text>
-                  </TouchableOpacity>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.timeText}>{item.arrival_time}</Text>
+                  <Text style={styles.stationText}>{item.to_city}</Text>
                 </View>
               </View>
-            );
-          })
+
+              <View style={styles.cardDivider} />
+
+              <View style={styles.cardFooter}>
+                <View style={styles.amenitiesRow}>
+                  <View style={styles.amenity}>
+                    <Ionicons name="wifi" size={17} color="#475569" style={{ marginRight: 4 }} />
+                    <Text style={styles.amenityText}>Wi-Fi</Text>
+                  </View>
+                  <View style={styles.amenity}>
+                    <Ionicons name="flash-outline" size={17} color="#475569" style={{ marginRight: 4 }} />
+                    <Text style={styles.amenityText}>Розетка</Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.selectBtn}
+                  onPress={() => navigation.navigate('TrainDetails', { train: item, date })}
+                >
+                  <Text style={styles.selectBtnText}>Таңдау ›</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
         )}
 
         <View style={styles.promoRow}>
@@ -190,7 +243,6 @@ export default function SearchResultsScreen({ route, navigation }) {
             <Text style={styles.promoDesc}>Қосымша орын және тегін тағамдар</Text>
           </View>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -200,43 +252,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F6F9',
+  },
+  headerWrap: {
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 20,
   },
   scrollContent: {
-    paddingBottom: 110,
+    paddingHorizontal: 20,
+    paddingBottom: 120,
   },
   centerContainer: {
     paddingVertical: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+  centerText: {
+    marginTop: 10,
+    color: '#64748B',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  retryBtn: {
+    marginTop: 16,
+    backgroundColor: '#003d9b',
     paddingHorizontal: 20,
-    marginTop: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
   },
-  brandTitle: {
-    fontSize: 20,
+  retryBtnText: {
+    color: '#FFFFFF',
     fontWeight: 'bold',
-    color: '#003d9b',
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    fontSize: 13,
   },
   routeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    paddingHorizontal: 10,
   },
   routeDateText: {
     fontSize: 12,
@@ -264,7 +315,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   filtersScroll: {
-    flexDirection: 'row',
+    flexGrow: 0,
     marginBottom: 20,
   },
   filterBtnOutline: {
@@ -398,6 +449,10 @@ const styles = StyleSheet.create({
   amenitiesRow: {
     flexDirection: 'row',
     gap: 12,
+  },
+  amenity: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   amenityText: {
     fontSize: 12,
