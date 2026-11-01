@@ -53,6 +53,18 @@ function TabButton({ children, onPress, onLongPress, accessibilityState, testID 
   );
 }
 
+// Вложенный стек внутри вкладки «Іздеу»: на Home и SearchResults виден таб-бар
+const SearchStackNav = createNativeStackNavigator();
+
+function SearchStack() {
+  return (
+    <SearchStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <SearchStackNav.Screen name="Home" component={HomeScreen} />
+      <SearchStackNav.Screen name="SearchResults" component={SearchResultsScreen} />
+    </SearchStackNav.Navigator>
+  );
+}
+
 function MainTabs() {
   const insets = useSafeAreaInsets();
 
@@ -91,7 +103,7 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="SearchTab" component={HomeScreen} options={{ tabBarLabel: 'Іздеу' }} />
+      <Tab.Screen name="SearchTab" component={SearchStack} options={{ tabBarLabel: 'Іздеу' }} />
       <Tab.Screen name="MyTripsTab" component={MyTripsScreen} options={{ tabBarLabel: 'Сапарлар' }} />
       <Tab.Screen name="AlertsTab" component={AlertsScreen} options={{ tabBarLabel: 'Ескертулер' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ tabBarLabel: 'Профиль' }} />
@@ -106,7 +118,6 @@ export default function App() {
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Main" component={MainTabs} />
-        <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
         <Stack.Screen name="TrainDetails" component={TrainDetailsScreen} />
         <Stack.Screen name="SeatSelection" component={SeatSelectionScreen} />
         <Stack.Screen name="PassengerInfo" component={PassengerInfoScreen} />
