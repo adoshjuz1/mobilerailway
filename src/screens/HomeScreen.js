@@ -8,35 +8,61 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Header from '../components/Header';
+
+const pad = (n) => String(n).padStart(2, '0');
+
+// Сегодняшняя дата в формате ГГГГ-ММ-ДД (его ждёт SearchResultsScreen)
+const getTodayIso = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+// ГГГГ-ММ-ДД -> ДД.ММ.ГГГГ для отображения
+const toDisplayDate = (iso) => {
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+};
+
+const POPULAR_ROUTES = [
+  { id: 'almaty', from: 'Астана', to: 'Алматы', fromTag: 'АСТАНАДАН', price: '12 500', icon: 'nutrition', color: '#1D4ED8' },
+  { id: 'astana', from: 'Алматы', to: 'Астана', fromTag: 'АЛМАТЫДАН', price: '12 500', icon: 'business', color: '#10B981' },
+  { id: 'shymkent', from: 'Алматы', to: 'Шымкент', fromTag: 'АЛМАТЫДАН', price: '9 800', icon: 'sunny', color: '#F59E0B' },
+];
+
+const INITIAL_RECENT = [
+  { id: 'r1', from: 'Алматы', to: 'Астана', sub: 'Ертең, 1 Ересек' },
+  { id: 'r2', from: 'Шымкент', to: 'Алматы', sub: '24 Қаз, 2 Ересек' },
+];
 
 export default function HomeScreen({ navigation }) {
   const [fromCity, setFromCity] = useState('');
   const [toCity, setToCity] = useState('');
-  const [departDate, setDepartDate] = useState('24.10.2026');
-  const [travelers, setTravelers] = useState('1 Ересек');
+  const [departDate] = useState(getTodayIso());
+  const [travelers] = useState('1 Ересек');
+  const [recent, setRecent] = useState(INITIAL_RECENT);
+
+  const goToResults = (from, to) => {
+    navigation.navigate('SearchResults', {
+      fromCity: from.trim() || undefined,
+      toCity: to.trim() || undefined,
+      date: departDate,
+    });
+  };
+
+  const fillRoute = (from, to) => {
+    setFromCity(from);
+    setToCity(to);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* Шапка: Гамбургер + Название + Аватар */}
-        <View style={styles.topHeader}>
-          <TouchableOpacity style={styles.iconBtn}>
-            <Ionicons name="menu-outline" size={24} color="#003d9b" />
-          </TouchableOpacity>
-          <Text style={styles.brandTitle}>Railway Connect</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('ProfileTab')}>
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={18} color="#003d9b" />
-            </View>
-          </TouchableOpacity>
-        </View>
+        <Header onAvatarPress={() => navigation.navigate('ProfileTab')} />
 
-        {/* Заголовок страницы */}
         <View style={styles.titleSection}>
           <Text style={styles.mainHeading}>Қайда барамыз?</Text>
           <Text style={styles.subHeading}>Желі бойынша келесі сапарыңызды брондаңыз.</Text>
@@ -45,20 +71,17 @@ export default function HomeScreen({ navigation }) {
         {/* Карточка поиска */}
         <View style={styles.searchCard}>
           <View style={styles.routeInputContainer}>
-            {/* Графика линии маршрута слева */}
             <View style={styles.routeLineColumn}>
               <View style={styles.startDot}>
                 <Ionicons name="location" size={12} color="#FFFFFF" />
               </View>
               <View style={styles.verticalLine} />
               <View style={styles.endDot}>
-                <Ionicons name="map-outline" size={12} color={"#003d9b"} />
+                <Ionicons name="map-outline" size={12} color="#003d9b" />
               </View>
             </View>
 
-            {/* Инпуты маршрута */}
-            <View style={styles.inputsColumn}>  
-
+            <View style={styles.inputsColumn}>
               <View style={styles.inputGroup}>
                 <Text style={styles.fieldLabel}>Шығатын орын</Text>
                 <View style={styles.inputContainer}>
@@ -69,8 +92,8 @@ export default function HomeScreen({ navigation }) {
                     value={fromCity}
                     onChangeText={setFromCity}
                   />
+                </View>
               </View>
-            </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.fieldLabel}>Баратын орын</Text>
@@ -87,108 +110,90 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Дата и Количество пассажиров в один ряд */}
           <View style={styles.rowFields}>
-
-              <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
-                <Text style={styles.fieldLabel}>Кету күні</Text>
-                <View style={styles.pickerBox}>
-                  <Text style={styles.pickerText}>{departDate}</Text>
-                  <View style={{ top: -1}}>
-                    <Ionicons name="calendar-outline" size={20} color="#003d9b" />
-                  </View>
-                </View>
+            <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+              <Text style={styles.fieldLabel}>Кету күні</Text>
+              <View style={styles.pickerBox}>
+                <Text style={styles.pickerText}>{toDisplayDate(departDate)}</Text>
+                <Ionicons name="calendar-outline" size={20} color="#003d9b" />
               </View>
+            </View>
 
             <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
               <Text style={styles.fieldLabel}>Жолаушылар</Text>
               <View style={styles.pickerBox}>
                 <Text style={styles.pickerText}>{travelers}</Text>
-                <View style={{ top: -1}}>
-                  <Ionicons name="people-outline" size={20} color="#003d9b" />
-                </View>
+                <Ionicons name="people-outline" size={20} color="#003d9b" />
               </View>
             </View>
           </View>
 
-          {/* Кнопка Поиска */}
-          <TouchableOpacity 
-            style={styles.findButton}
-            onPress={() => navigation.navigate('SearchResults', { fromCity, toCity })}
-          >
-            <Ionicons name="search" size={18} color="#FFFFFF" style={{ marginRight: 8}} />
+          <TouchableOpacity style={styles.findButton} onPress={() => goToResults(fromCity, toCity)}>
+            <Ionicons name="search" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text style={styles.findButtonText}>Поездарды табу</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Секция: Соңғы іздеулер */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Соңғы іздеулер</Text>
-          <TouchableOpacity>
-            <Text style={styles.clearLink}>Барлығын тазарту</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Соңғы іздеулер */}
+        {recent.length > 0 && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Соңғы іздеулер</Text>
+              <TouchableOpacity onPress={() => setRecent([])}>
+                <Text style={styles.clearLink}>Барлығын тазарту</Text>
+              </TouchableOpacity>
+            </View>
 
-        <TouchableOpacity style={styles.recentItem}>
-          <View style={styles.recentIconBox}>
-            <Ionicons name="time-outline" size={18} color="#003d9b" />
-          </View>
-          <View style={styles.recentInfo}>
-            <Text style={styles.recentRoute}>Лондон Кингс Кросс ➔ Эдинбург</Text>
-            <Text style={styles.recentSub}>Ертең, 1 Ересек</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-        </TouchableOpacity>
+            {recent.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.recentItem}
+                onPress={() => fillRoute(item.from, item.to)}
+              >
+                <View style={styles.recentIconBox}>
+                  <Ionicons name="time-outline" size={18} color="#003d9b" />
+                </View>
+                <View style={styles.recentInfo}>
+                  <Text style={styles.recentRoute}>{item.from} ➔ {item.to}</Text>
+                  <Text style={styles.recentSub}>{item.sub}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
 
-        <TouchableOpacity style={styles.recentItem}>
-          <View style={styles.recentIconBox}>
-            <Ionicons name="time-outline" size={18} color="#003d9b" />
-          </View>
-          <View style={styles.recentInfo}>
-            <Text style={styles.recentRoute}>Манчестер ➔ Лондон Юстон</Text>
-            <Text style={styles.recentSub}>24 Қаз, 2 Ересек</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-        </TouchableOpacity>
+        {/* Танымал бағыттар */}
+        <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 12 }]}>Танымал бағыттар</Text>
 
-        {/* Секция: Танымал бағыттар */}
-        <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 12 }]}>
-          Танымал бағыттар
-        </Text>
-        
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.popularScroll}>
-          <View style={styles.popularCard}>
-            <View style={[styles.cardImgPlaceholder, { backgroundColor: '#3B82F6' }]}>
-              <Text style={styles.cardImgText}>🗼</Text>
-              <View style={styles.cardOverlay}>
-                <Text style={styles.fromTag}>ЛОНДОНДАН</Text>
-                <Text style={styles.cardCity}>Париж Норд</Text>
+          {POPULAR_ROUTES.map((route) => (
+            <TouchableOpacity
+              key={route.id}
+              style={styles.popularCard}
+              activeOpacity={0.85}
+              onPress={() => fillRoute(route.from, route.to)}
+            >
+              <View style={[styles.cardImgPlaceholder, { backgroundColor: route.color }]}>
+                <Ionicons name={route.icon} size={44} color="rgba(255,255,255,0.45)" />
+                <View style={styles.cardOverlay}>
+                  <Text style={styles.fromTag}>{route.fromTag}</Text>
+                  <Text style={styles.cardCity}>{route.to}</Text>
+                </View>
               </View>
-            </View>
-            <Text style={styles.cardPrice}>49.00 £ бастап</Text>
-          </View>
-
-          <View style={styles.popularCard}>
-            <View style={[styles.cardImgPlaceholder, { backgroundColor: '#10B981' }]}>
-              <Text style={styles.cardImgText}>🌷</Text>
-              <View style={styles.cardOverlay}>
-                <Text style={styles.fromTag}>ЛОНДОНДАН</Text>
-                <Text style={styles.cardCity}>Амстердам</Text>
-              </View>
-            </View>
-            <Text style={styles.cardPrice}>55.00 £ бастап</Text>
-          </View>
+              <Text style={styles.cardPrice}>{route.price} ₸ бастап</Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
 
-        {/* Информационный баннер статуса */}
+        {/* Статус сети */}
         <View style={styles.statusBanner}>
-          <Ionicons name="information-circle-outline" size={22} color="#065F46" />
+          <Ionicons name="checkmark-circle-outline" size={22} color="#065F46" />
           <View style={{ flex: 1, marginLeft: 10 }}>
             <Text style={styles.bannerTitle}>Барлық желілерде қалыпты қызмет</Text>
             <Text style={styles.bannerSub}>Қазіргі уақытта ірі кешігулер тіркелген жоқ. Қауіпсіз сапар!</Text>
           </View>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -201,26 +206,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 110,
-  },
-  topHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  brandTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#003d9b',
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingBottom: 120,
   },
   titleSection: {
     marginBottom: 20,
@@ -277,23 +263,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5, 
+    borderWidth: 1.5,
     borderColor: '#003d9b',
-  },
-  dotIcon: {
-    fontSize: 12,
   },
   inputsColumn: {
     flex: 1,
     gap: 10,
-  },
-  fieldBox: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
   fieldLabel: {
     fontSize: 12,
@@ -316,7 +291,7 @@ const styles = StyleSheet.create({
     borderColor: '#c3c6d6',
     borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 8, 
+    paddingVertical: 8,
   },
   rowFields: {
     flexDirection: 'row',
@@ -327,10 +302,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#f1f3ff',
-    borderWidth: 1,           
-    borderColor: '#c3c6d6',       
-    borderRadius: 12,          
-    paddingHorizontal: 12,      
+    borderWidth: 1,
+    borderColor: '#c3c6d6',
+    borderRadius: 12,
+    paddingHorizontal: 12,
     paddingVertical: 10,
   },
   pickerText: {
@@ -338,16 +313,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
   },
-  pickerIcon: {
-    fontSize: 14,
-  },
   findButton: {
     backgroundColor: '#003d9b',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: "center",
+    justifyContent: 'center',
   },
   findButtonText: {
     color: '#FFFFFF',
@@ -387,9 +359,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  recentIcon: {
-    fontSize: 16,
-  },
   recentInfo: {
     flex: 1,
   },
@@ -401,10 +370,6 @@ const styles = StyleSheet.create({
   recentSub: {
     fontSize: 12,
     color: '#64748B',
-  },
-  arrowIcon: {
-    fontSize: 18,
-    color: '#94A3B8',
   },
   popularScroll: {
     flexDirection: 'row',
@@ -420,12 +385,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    position: 'relative',
     marginBottom: 6,
-  },
-  cardImgText: {
-    fontSize: 40,
-    opacity: 0.5,
   },
   cardOverlay: {
     position: 'absolute',
@@ -456,9 +416,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     alignItems: 'center',
-  },
-  bannerIcon: {
-    fontSize: 20,
   },
   bannerTitle: {
     fontSize: 12,

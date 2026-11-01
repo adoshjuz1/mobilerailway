@@ -8,61 +8,64 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function TrainDetailsScreen({ navigation }) {
-  const [selectedClass, setSelectedClass] = useState('standard'); // 'standard' или 'first'
+export default function TrainDetailsScreen({ route, navigation }) {
+  const { train } = route.params || {};
+  const [selectedClass, setSelectedClass] = useState('standard');
+
+  const basePrice = train?.min_price || 12450;
+  const firstClassPrice = Math.round(basePrice * 1.5);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Шапка */}
         <View style={styles.topHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backIcon}>←</Text>
+            <Ionicons name="arrow-back" size={22} color="#003d9b" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Поезд мәліметтері</Text>
           <View style={styles.avatarPlaceholder}>
-            <Text style={{ fontSize: 16 }}>👤</Text>
+            <Ionicons name="person" size={16} color="#003d9b" />
           </View>
         </View>
 
-        {/* Главная карточка поезда */}
         <View style={styles.mainCard}>
           <View style={styles.cardTopRow}>
             <View style={styles.statusBadge}>
               <Text style={styles.statusBadgeText}>Уақытында</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.priceBig}>12 450 ₸</Text>
+              <Text style={styles.priceBig}>
+                {selectedClass === 'standard' ? basePrice : firstClassPrice} ₸
+              </Text>
               <Text style={styles.priceSub}>адам басына</Text>
             </View>
           </View>
 
-          <Text style={styles.trainTitle}>Expresso 402</Text>
-          <Text style={styles.trainType}>Жоғары жылдамдықты қалааралық</Text>
+          <Text style={styles.trainTitle}>{train ? `${train.number} - ${train.name}` : 'Expresso 402'}</Text>
+          <Text style={styles.trainType}>{train?.category || 'Жоғары жылдамдықты қалааралық'}</Text>
 
-          {/* Иконки удобств */}
           <View style={styles.amenitiesRow}>
             <View style={styles.amenityBox}>
-              <Text style={styles.amenityIcon}>📶</Text>
+              <Ionicons name="wifi" size={16} color="#003d9b" style={{ marginBottom: 4 }} />
               <Text style={styles.amenityText}>Тегін Wi-Fi</Text>
             </View>
 
             <View style={styles.amenityBox}>
-              <Text style={styles.amenityIcon}>🔌</Text>
+              <Ionicons name="flash-outline" size={16} color="#003d9b" style={{ marginBottom: 4 }} />
               <Text style={styles.amenityText}>220V Розетка</Text>
             </View>
 
             <View style={styles.amenityBox}>
-              <Text style={styles.amenityIcon}>🍽️</Text>
+              <Ionicons name="restaurant-outline" size={16} color="#003d9b" style={{ marginBottom: 4 }} />
               <Text style={styles.amenityText}>Вагон-ресторан</Text>
             </View>
           </View>
         </View>
 
-        {/* Сапар бағыты (Journey Timeline) */}
         <Text style={styles.sectionTitle}>Сапар бағыты</Text>
         
         <View style={styles.timelineCard}>
@@ -70,10 +73,10 @@ export default function TrainDetailsScreen({ navigation }) {
             <View style={styles.dotBlue} />
             <View style={styles.timelineContent}>
               <View style={styles.itemHeader}>
-                <Text style={styles.timeText}>08:30</Text>
+                <Text style={styles.timeText}>{train?.departure_time || '08:30'}</Text>
                 <Text style={styles.platformText}>4-ші платформа</Text>
               </View>
-              <Text style={styles.stationTitle}>Астана (Нұрлы Жол)</Text>
+              <Text style={styles.stationTitle}>{train?.from_city || 'Астана (Нұрлы Жол)'}</Text>
               <Text style={styles.stationSub}>Шығатын станция</Text>
             </View>
           </View>
@@ -98,51 +101,47 @@ export default function TrainDetailsScreen({ navigation }) {
             <View style={styles.dotOutline} />
             <View style={styles.timelineContent}>
               <View style={styles.itemHeader}>
-                <Text style={styles.timeText}>12:45</Text>
+                <Text style={styles.timeText}>{train?.arrival_time || '12:45'}</Text>
                 <Text style={styles.platformText}>12-ші платформа</Text>
               </View>
-              <Text style={styles.stationTitle}>Алматы 2</Text>
+              <Text style={styles.stationTitle}>{train?.to_city || 'Алматы 2'}</Text>
               <Text style={styles.stationSub}>Баратын станция</Text>
             </View>
           </View>
         </View>
 
-        {/* Класс таңдау */}
         <Text style={styles.sectionTitle}>Жол жүру класын таңдаңыз</Text>
 
         <View style={styles.classRow}>
-          {/* Стандарт */}
           <TouchableOpacity 
             style={[styles.classCard, selectedClass === 'standard' && styles.classCardActive]}
             onPress={() => setSelectedClass('standard')}
           >
             <View style={styles.classHeader}>
               <Text style={styles.classTitle}>СТАНДАРТ</Text>
-              {selectedClass === 'standard' && <Text style={styles.checkIcon}>✓</Text>}
+              {selectedClass === 'standard' && <Ionicons name="checkmark" size={14} color="#003d9b" />}
             </View>
-            <Text style={styles.classPrice}>12 450 ₸</Text>
+            <Text style={styles.classPrice}>{basePrice} ₸</Text>
             <Text style={styles.classDesc}>Реттелетін орындықтар, USB зарядтау</Text>
           </TouchableOpacity>
 
-          {/* Бірінші класс */}
           <TouchableOpacity 
             style={[styles.classCard, selectedClass === 'first' && styles.classCardActive]}
             onPress={() => setSelectedClass('first')}
           >
             <View style={styles.classHeader}>
               <Text style={styles.classTitle}>1-ШІ КЛАСС</Text>
-              {selectedClass === 'first' && <Text style={styles.checkIcon}>✓</Text>}
+              {selectedClass === 'first' && <Ionicons name="checkmark" size={14} color="#003d9b" />}
             </View>
-            <Text style={styles.classPrice}>18 900 ₸</Text>
+            <Text style={styles.classPrice}>{firstClassPrice} ₸</Text>
             <Text style={styles.classDesc}>Кең орындар, тегін тамақ, Бизнес-зал</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Детализация цен */}
         <View style={styles.priceBreakdownCard}>
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Негізгі тариф</Text>
-            <Text style={styles.priceVal}>11 200 ₸</Text>
+            <Text style={styles.priceVal}>{selectedClass === 'standard' ? Math.round(basePrice * 0.9) : Math.round(firstClassPrice * 0.9)} ₸</Text>
           </View>
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Брондау ақысы</Text>
@@ -158,20 +157,22 @@ export default function TrainDetailsScreen({ navigation }) {
           <View style={styles.priceRow}>
             <Text style={styles.totalLabel}>Барлығы</Text>
             <Text style={styles.totalVal}>
-              {selectedClass === 'standard' ? '12 450 ₸' : '18 900 ₸'}
+              {selectedClass === 'standard' ? basePrice : firstClassPrice} ₸
             </Text>
           </View>
         </View>
 
       </ScrollView>
 
-      {/* Нижняя кнопка */}
       <View style={styles.bottomBar}>
         <TouchableOpacity 
           style={styles.chooseSeatsBtn}
-          onPress={() => navigation.navigate('SeatSelection')}
+          onPress={() => navigation.navigate('SeatSelection', { train, selectedClass, price: selectedClass === 'standard' ? basePrice : firstClassPrice })}
         >
-          <Text style={styles.chooseSeatsBtnText}>Орын таңдау  💺</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.chooseSeatsBtnText}>Орын таңдау</Text>
+            <Ionicons name="grid-outline" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+          </View>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -197,16 +198,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 22,
-    color: '#0F2C59',
-    fontWeight: 'bold',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0F2C59',
+    color: '#003d9b',
   },
   avatarPlaceholder: {
     width: 36,
@@ -246,7 +243,7 @@ const styles = StyleSheet.create({
   priceBig: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#0F2C59',
+    color: '#003d9b',
   },
   priceSub: {
     fontSize: 11,
@@ -275,19 +272,15 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
   },
-  amenityIcon: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
   amenityText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#1D4ED8',
+    color: '#003d9b',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#0F2C59',
+    color: '#003d9b',
     marginBottom: 12,
   },
   timelineCard: {
@@ -308,7 +301,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#0F2C59',
+    backgroundColor: '#003d9b',
     marginTop: 4,
     marginRight: 12,
   },
@@ -325,7 +318,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#0F2C59',
+    borderColor: '#003d9b',
     backgroundColor: '#FFFFFF',
     marginTop: 4,
     marginRight: 12,
@@ -357,7 +350,7 @@ const styles = StyleSheet.create({
   stationTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#0F2C59',
+    color: '#041b3c',
   },
   stationSub: {
     fontSize: 11,
@@ -377,7 +370,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   classCardActive: {
-    borderColor: '#0F2C59',
+    borderColor: '#003d9b',
     backgroundColor: '#F8FAFC',
   },
   classHeader: {
@@ -391,14 +384,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#64748B',
   },
-  checkIcon: {
-    color: '#0F2C59',
-    fontWeight: 'bold',
-  },
   classPrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0F2C59',
+    color: '#003d9b',
     marginBottom: 4,
   },
   classDesc: {
@@ -433,12 +422,12 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#0F2C59',
+    color: '#003d9b',
   },
   totalVal: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0F2C59',
+    color: '#003d9b',
   },
   bottomBar: {
     position: 'absolute',
@@ -456,7 +445,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
   chooseSeatsBtn: {
-    backgroundColor: '#0F2C59',
+    backgroundColor: '#003d9b',
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
