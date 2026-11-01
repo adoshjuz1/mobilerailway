@@ -9,28 +9,56 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Header from '../components/Header';
+import { fonts } from '../theme';
+
+const FIRST_CLASS_COEFFICIENT = 1.5;
+const BOOKING_FEE = 450;
+const TAXES = 800;
+
+// Платформы пока заглушки, пока бэкенд их не отдаёт
+const PLATFORMS = ['4-ші платформа', '1-ші платформа', '12-ші платформа'];
+
+const pad = (n) => String(n).padStart(2, '0');
+
+const timeToMinutes = (time) => {
+  const [h, m] = (time || '0:0').split(':').map(Number);
+  return h * 60 + (m || 0);
+};
+
+const formatTime = (minutes) => {
+  const n = ((minutes % 1440) + 1440) % 1440;
+  return `${pad(Math.floor(n / 60))}:${pad(n % 60)}`;
+};
+
+// Время прохождения аралық станции: середина пути между отправлением и прибытием
+const getMiddleStopTime = (train) => {
+  const dep = timeToMinutes(train.departure_time);
+  let diff = timeToMinutes(train.arrival_time) - dep;
+  if (diff <= 0) diff += 1440;
+  return formatTime(dep + Math.round(diff / 2));
+};
 
 export default function TrainDetailsScreen({ route, navigation }) {
-  const { train } = route.params || {};
+  const { train = {}, date } = route.params || {};
+  const insets = useSafeAreaInsets();
   const [selectedClass, setSelectedClass] = useState('standard');
 
-  const basePrice = train?.min_price || 12450;
-  const firstClassPrice = Math.round(basePrice * 1.5);
+  const basePrice = Number(train.min_price) || 12450;
+  const firstClassPrice = Math.round(basePrice * FIRST_CLASS_COEFFICIENT);
+  const price = selectedClass === 'standard' ? basePrice : firstClassPrice;
+  const baseFare = Math.max(price - BOOKING_FEE - TAXES, 0);
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9FF" />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#003d9b" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Поезд мәліметтері</Text>
-          <View style={styles.avatarPlaceholder}>
-            <Ionicons name="person" size={16} color="#003d9b" />
-          </View>
-        </View>
+        <Header
+          title="Поезд мәліметтері"
+          onBack={() => navigation.goBack()}
+          onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })}
+        />
 
         <View style={styles.mainCard}>
           <View style={styles.cardTopRow}>
@@ -38,15 +66,13 @@ export default function TrainDetailsScreen({ route, navigation }) {
               <Text style={styles.statusBadgeText}>Уақытында</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.priceBig}>
-                {selectedClass === 'standard' ? basePrice : firstClassPrice} ₸
-              </Text>
+              <Text style={styles.priceBig}>{price} ₸</Text>
               <Text style={styles.priceSub}>адам басына</Text>
             </View>
           </View>
 
-          <Text style={styles.trainTitle}>{train ? `${train.number} - ${train.name}` : 'Expresso 402'}</Text>
-          <Text style={styles.trainType}>{train?.category || 'Жоғары жылдамдықты қалааралық'}</Text>
+          <Text style={styles.trainTitle}>{train.number} - {train.name}</Text>
+          <Text style={styles.trainType}>{train.category || 'Жоғары жылдамдықты қалааралық'}</Text>
 
           <View style={styles.amenitiesRow}>
             <View style={styles.amenityBox}>
@@ -67,16 +93,16 @@ export default function TrainDetailsScreen({ route, navigation }) {
         </View>
 
         <Text style={styles.sectionTitle}>Сапар бағыты</Text>
-        
+
         <View style={styles.timelineCard}>
           <View style={styles.timelineItem}>
             <View style={styles.dotBlue} />
             <View style={styles.timelineContent}>
               <View style={styles.itemHeader}>
-                <Text style={styles.timeText}>{train?.departure_time || '08:30'}</Text>
-                <Text style={styles.platformText}>4-ші платформа</Text>
+                <Text style={styles.timeText}>{train.departure_time || '--:--'}</Text>
+                <Text style={styles.platformText}>{PLATFORMS[0]}</Text>
               </View>
-              <Text style={styles.stationTitle}>{train?.from_city || 'Астана (Нұрлы Жол)'}</Text>
+              <Text style={styles.stationTitle}>{train.from_city}</Text>
               <Text style={styles.stationSub}>Шығатын станция</Text>
             </View>
           </View>
@@ -87,10 +113,10 @@ export default function TrainDetailsScreen({ route, navigation }) {
             <View style={styles.dotGray} />
             <View style={styles.timelineContent}>
               <View style={styles.itemHeader}>
-                <Text style={styles.timeText}>10:15</Text>
-                <Text style={styles.platformText}>1-ші платформа</Text>
+                <Text style={styles.timeText}>{getMiddleStopTime(train)}</Text>
+                <Text style={styles.platformText}>{PLATFORMS[1]}</Text>
               </View>
-              <Text style={styles.stationTitle}>Қарағанды Сортировочная</Text>
+              <Text style={styles.stationTitle}>Аралық станция</Text>
               <Text style={styles.stationSub}>5 минут аялдама</Text>
             </View>
           </View>
@@ -101,10 +127,10 @@ export default function TrainDetailsScreen({ route, navigation }) {
             <View style={styles.dotOutline} />
             <View style={styles.timelineContent}>
               <View style={styles.itemHeader}>
-                <Text style={styles.timeText}>{train?.arrival_time || '12:45'}</Text>
-                <Text style={styles.platformText}>12-ші платформа</Text>
+                <Text style={styles.timeText}>{train.arrival_time || '--:--'}</Text>
+                <Text style={styles.platformText}>{PLATFORMS[2]}</Text>
               </View>
-              <Text style={styles.stationTitle}>{train?.to_city || 'Алматы 2'}</Text>
+              <Text style={styles.stationTitle}>{train.to_city}</Text>
               <Text style={styles.stationSub}>Баратын станция</Text>
             </View>
           </View>
@@ -113,25 +139,25 @@ export default function TrainDetailsScreen({ route, navigation }) {
         <Text style={styles.sectionTitle}>Жол жүру класын таңдаңыз</Text>
 
         <View style={styles.classRow}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.classCard, selectedClass === 'standard' && styles.classCardActive]}
             onPress={() => setSelectedClass('standard')}
           >
             <View style={styles.classHeader}>
               <Text style={styles.classTitle}>СТАНДАРТ</Text>
-              {selectedClass === 'standard' && <Ionicons name="checkmark" size={14} color="#003d9b" />}
+              {selectedClass === 'standard' && <Ionicons name="checkmark-circle" size={22} color="#003d9b" />}
             </View>
             <Text style={styles.classPrice}>{basePrice} ₸</Text>
             <Text style={styles.classDesc}>Реттелетін орындықтар, USB зарядтау</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.classCard, selectedClass === 'first' && styles.classCardActive]}
             onPress={() => setSelectedClass('first')}
           >
             <View style={styles.classHeader}>
               <Text style={styles.classTitle}>1-ШІ КЛАСС</Text>
-              {selectedClass === 'first' && <Ionicons name="checkmark" size={14} color="#003d9b" />}
+              {selectedClass === 'first' && <Ionicons name="checkmark-circle" size={22} color="#003d9b" />}
             </View>
             <Text style={styles.classPrice}>{firstClassPrice} ₸</Text>
             <Text style={styles.classDesc}>Кең орындар, тегін тамақ, Бизнес-зал</Text>
@@ -141,33 +167,30 @@ export default function TrainDetailsScreen({ route, navigation }) {
         <View style={styles.priceBreakdownCard}>
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Негізгі тариф</Text>
-            <Text style={styles.priceVal}>{selectedClass === 'standard' ? Math.round(basePrice * 0.9) : Math.round(firstClassPrice * 0.9)} ₸</Text>
+            <Text style={styles.priceVal}>{baseFare} ₸</Text>
           </View>
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Брондау ақысы</Text>
-            <Text style={styles.priceVal}>450 ₸</Text>
+            <Text style={styles.priceVal}>{BOOKING_FEE} ₸</Text>
           </View>
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Салықтар мен алымдар</Text>
-            <Text style={styles.priceVal}>800 ₸</Text>
+            <Text style={styles.priceVal}>{TAXES} ₸</Text>
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.priceRow}>
             <Text style={styles.totalLabel}>Барлығы</Text>
-            <Text style={styles.totalVal}>
-              {selectedClass === 'standard' ? basePrice : firstClassPrice} ₸
-            </Text>
+            <Text style={styles.totalVal}>{price} ₸</Text>
           </View>
         </View>
-
       </ScrollView>
 
-      <View style={styles.bottomBar}>
-        <TouchableOpacity 
+      <View style={[styles.bottomBar, { paddingBottom: 16 + insets.bottom }]}>
+        <TouchableOpacity
           style={styles.chooseSeatsBtn}
-          onPress={() => navigation.navigate('SeatSelection', { train, selectedClass, price: selectedClass === 'standard' ? basePrice : firstClassPrice })}
+          onPress={() => navigation.navigate('SeatSelection', { train, date, selectedClass, price })}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text style={styles.chooseSeatsBtnText}>Орын таңдау</Text>
@@ -182,36 +205,11 @@ export default function TrainDetailsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F9',
+    backgroundColor: '#F9F9FF',
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 110,
-  },
-  topHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#003d9b',
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingBottom: 130,
   },
   mainCard: {
     backgroundColor: '#FFFFFF',
@@ -220,6 +218,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     elevation: 3,
     shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
   },
@@ -411,7 +410,7 @@ const styles = StyleSheet.create({
   },
   priceVal: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.mono,
     color: '#1E293B',
   },
   divider: {
@@ -435,7 +434,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 16,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     elevation: 10,

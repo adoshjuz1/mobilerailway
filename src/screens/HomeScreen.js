@@ -59,7 +59,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9FF" />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Header onAvatarPress={() => navigation.navigate('ProfileTab')} />
 
@@ -202,7 +202,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F9',
+    backgroundColor: '#F9F9FF',
   },
   scrollContent: {
     padding: 20,
@@ -345,7 +345,9 @@ const styles = StyleSheet.create({
   recentItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F1F3FF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     borderRadius: 16,
     padding: 12,
     marginBottom: 10,

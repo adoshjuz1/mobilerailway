@@ -105,9 +105,15 @@ export default function SearchResultsScreen({ route, navigation }) {
     return list;
   }, [trains, activeFilter]);
 
+  // Самый быстрый поезд получает метку и выделенную карточку (если поездов больше одного)
+  const fastestId = useMemo(() => {
+    if (trains.length < 2) return null;
+    return trains.reduce((best, t) => (getDurationMinutes(t) < getDurationMinutes(best) ? t : best)).id;
+  }, [trains]);
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9FF" />
 
       <View style={styles.headerWrap}>
         <Header onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })} />
@@ -171,8 +177,15 @@ export default function SearchResultsScreen({ route, navigation }) {
             <Text style={styles.centerText}>Өкінішке орай, бұл бағытқа поездар табылмады.</Text>
           </View>
         ) : (
-          sortedTrains.map((item) => (
-            <View key={item.id} style={styles.trainCard}>
+          sortedTrains.map((item) => {
+            const isFastest = item.id === fastestId;
+            return (
+            <View key={item.id} style={[styles.trainCard, isFastest && styles.trainCardFastest]}>
+              {isFastest && (
+                <View style={styles.fastestTag}>
+                  <Text style={styles.fastestTagText}>ЕҢ ЖЫЛДАМ</Text>
+                </View>
+              )}
               <View style={styles.cardHeader}>
                 <View style={styles.expressBadge}>
                   <Text style={styles.expressBadgeText}>{item.category || 'Express'}</Text>
@@ -220,14 +233,17 @@ export default function SearchResultsScreen({ route, navigation }) {
                 </View>
 
                 <TouchableOpacity
-                  style={styles.selectBtn}
+                  style={isFastest ? styles.bookBtn : styles.selectBtn}
                   onPress={() => navigation.navigate('TrainDetails', { train: item, date })}
                 >
-                  <Text style={styles.selectBtnText}>Таңдау ›</Text>
+                  <Text style={isFastest ? styles.bookBtnText : styles.selectBtnText}>
+                    {isFastest ? 'Брондау' : 'Таңдау ›'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
-          ))
+            );
+          })
         )}
 
         <View style={styles.promoRow}>
@@ -251,7 +267,7 @@ export default function SearchResultsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F9',
+    backgroundColor: '#F9F9FF',
   },
   headerWrap: {
     paddingHorizontal: 20,
@@ -467,6 +483,38 @@ const styles = StyleSheet.create({
     color: '#003d9b',
     fontWeight: 'bold',
     fontSize: 13,
+  },
+  trainCardFastest: {
+    borderWidth: 1,
+    borderColor: '#8FA8D8',
+    paddingTop: 36,
+  },
+  fastestTag: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#003d9b',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderTopRightRadius: 19,
+    borderBottomLeftRadius: 12,
+  },
+  fastestTagText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  bookBtn: {
+    backgroundColor: '#003d9b',
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  bookBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   promoRow: {
     flexDirection: 'row',

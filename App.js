@@ -5,6 +5,17 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
+import { JetBrainsMono_500Medium, JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
+
+import { applyFonts } from './src/utils/applyFonts';
+import { colors } from './src/theme';
 
 // Подключаем сверстанные экраны
 import OnboardingScreen from './src/screens/OnboardingScreen';
@@ -20,20 +31,22 @@ import AlertsScreen from './src/screens/AlertsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import TrainDetailsScreen from './src/screens/TrainDetailsScreen';
 
+// Шрифт Inter подставляется во все Text и TextInput по fontWeight
+applyFonts();
+
 const Stack = createNativeStackNavigator();
+const SearchStackNav = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Цвета таб-бара (точные значения можно уточнить в Figma → Dev Mode)
-const TAB_ACTIVE_PILL = '#7CF0C4';
-const TAB_ACTIVE_TINT = '#003d9b';
-const TAB_INACTIVE_TINT = '#64748B';
+const TAB_ACTIVE_TINT = colors.onSurface;
+const TAB_INACTIVE_TINT = colors.onSurfaceVariant;
 
 // [иконка активной вкладки, иконка неактивной]
 const TAB_ICONS = {
   SearchTab: ['search', 'search-outline'],
   MyTripsTab: ['ticket', 'ticket-outline'],
   AlertsTab: ['notifications', 'notifications-outline'],
-  ProfileTab: ['person', 'person-outline'],
+  ProfileTab: ['person-circle', 'person-circle-outline'],
 };
 
 // Кнопка вкладки: иконка и подпись вместе в зелёной «пилюле», когда вкладка активна
@@ -54,8 +67,6 @@ function TabButton({ children, onPress, onLongPress, accessibilityState, testID 
 }
 
 // Вложенный стек внутри вкладки «Іздеу»: на Home и SearchResults виден таб-бар
-const SearchStackNav = createNativeStackNavigator();
-
 function SearchStack() {
   return (
     <SearchStackNav.Navigator screenOptions={{ headerShown: false }}>
@@ -75,25 +86,27 @@ function MainTabs() {
         tabBarActiveTintColor: TAB_ACTIVE_TINT,
         tabBarInactiveTintColor: TAB_INACTIVE_TINT,
         tabBarButton: (props) => <TabButton {...props} />,
+        // Таб-бар прижат к низу экрана, верхние углы скруглены
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E2E8F0',
-          borderTopWidth: 1,
-          height: 64 + insets.bottom,
-          paddingTop: 8,
-          paddingBottom: insets.bottom + 6,
           position: 'absolute',
-          bottom: 0,
           left: 0,
           right: 0,
-          elevation: 10,
+          bottom: 0,
+          height: 68 + insets.bottom,
+          borderTopLeftRadius: 26,
+          borderTopRightRadius: 26,
+          backgroundColor: colors.card,
+          borderTopWidth: 0,
+          paddingTop: 4,
+          paddingBottom: insets.bottom,
+          elevation: 8,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: '600',
           marginTop: 2,
         },
@@ -112,6 +125,18 @@ function MainTabs() {
 }
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    JetBrainsMono_500Medium,
+    JetBrainsMono_700Bold,
+  });
+
+  // Пока шрифты грузятся, ничего не рисуем (при ошибке всё равно запускаем приложение)
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Onboarding" screenOptions={{ headerShown: false }}>
@@ -137,11 +162,11 @@ const styles = StyleSheet.create({
   tabPill: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 22,
   },
   tabPillActive: {
-    backgroundColor: TAB_ACTIVE_PILL,
+    backgroundColor: colors.mint,
   },
 });
