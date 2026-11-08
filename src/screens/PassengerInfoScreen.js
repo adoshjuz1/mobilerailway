@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import AppTabBar from '../components/AppTabBar';
 import { colors } from '../theme';
 
 const STEPS = ['Сапар', 'Жолаушылар', 'Төлем'];
@@ -156,6 +157,12 @@ export default function PassengerInfoScreen({ route, navigation }) {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Таб-бар как в макете: подсвечена вкладка «Сапарлар» */}
+      <AppTabBar
+        activeTab="MyTripsTab"
+        onTabPress={(tab) => navigation.navigate('Main', { screen: tab })}
+      />
     </SafeAreaView>
   );
 }
@@ -167,7 +174,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 130,
   },
   stepper: {
     flexDirection: 'row',
