@@ -12,100 +12,102 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Header from '../components/Header';
+import { colors } from '../theme';
 
-export default function PassengerInfoScreen({ navigation }) {
-  const [fullName, setFullName] = useState('Алекс Уолкер');
-  const [email, setEmail] = useState('alex.walker@example.com');
-  const [idNumber, setIdNumber] = useState('020815501234');
+const STEPS = ['Сапар', 'Жолаушылар', 'Төлем'];
+const CURRENT_STEP = 2;
+
+export default function PassengerInfoScreen({ route, navigation }) {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [idNumber, setIdNumber] = useState('');
   const [saveDetails, setSaveDetails] = useState(true);
+
+  const goToPayment = () => {
+    // ...route.params передаёт дальше всё, что пришло с предыдущих экранов
+    navigation.navigate('BookingSummary', {
+      ...route.params,
+      passenger: { fullName, email, idNumber },
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          
-          {/* Шапка */}
-          <View style={styles.topHeader}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Text style={styles.backIcon}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Railway Connect</Text>
-            <View style={styles.avatarPlaceholder}>
-              <Text style={{ fontSize: 16 }}>👤</Text>
-            </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Header
+            onBack={() => navigation.goBack()}
+            onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })}
+          />
+
+          {/* Индикатор шагов */}
+          <View style={styles.stepper}>
+            {STEPS.map((label, index) => {
+              const stepNumber = index + 1;
+              const reached = stepNumber <= CURRENT_STEP;
+
+              return (
+                <React.Fragment key={label}>
+                  {index > 0 && (
+                    <View style={[styles.stepLine, stepNumber <= CURRENT_STEP && styles.stepLineActive]} />
+                  )}
+                  <View style={styles.stepItem}>
+                    <View style={[styles.stepCircle, reached && styles.stepCircleReached]}>
+                      <Text style={[styles.stepNumber, reached && styles.stepNumberReached]}>
+                        {stepNumber}
+                      </Text>
+                    </View>
+                    <Text style={[styles.stepLabel, reached && styles.stepLabelReached]}>{label}</Text>
+                  </View>
+                </React.Fragment>
+              );
+            })}
           </View>
 
-          {/* Индикатор шагов (Stepper) */}
-          <View style={styles.stepperContainer}>
-            <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, styles.stepDone]}>
-                <Text style={styles.stepTextDone}>1</Text>
-              </View>
-              <Text style={styles.stepLabelDone}>Сапар</Text>
-            </View>
+          <Text style={styles.mainTitle}>Жолаушы мәліметтері</Text>
+          <Text style={styles.subTitle}>
+            Деректерді мемлекеттік жеке куәлігіңізде көрсетілгендей дәл енгізіңіз.
+          </Text>
 
-            <View style={[styles.stepLine, styles.stepLineActive]} />
-
-            <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, styles.stepActive]}>
-                <Text style={styles.stepTextActive}>2</Text>
-              </View>
-              <Text style={styles.stepLabelActive}>Жолаушылар</Text>
-            </View>
-
-            <View style={styles.stepLine} />
-
-            <View style={styles.stepItem}>
-              <View style={styles.stepCircle}>
-                <Text style={styles.stepTextInactive}>3</Text>
-              </View>
-              <Text style={styles.stepLabelInactive}>Төлем</Text>
-            </View>
-          </View>
-
-          {/* Заголовок */}
-          <View style={styles.titleSection}>
-            <Text style={styles.mainTitle}>Жолаушы мәліметтері</Text>
-            <Text style={styles.subTitle}>
-              Деректерді мемлекеттік жеке куәлігіңізде көрсетілгендей дәл енгізіңіз.
-            </Text>
-          </View>
-
-          {/* Карточка Жолаушы 1 */}
+          {/* Карточка жолаушы */}
           <View style={styles.passengerCard}>
             <View style={styles.cardHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.passengerIcon}>👤</Text>
-                <Text style={styles.passengerTitle}>1-ші Жолаушы</Text>
+              <View style={styles.cardTitleRow}>
+                <Ionicons name="person-outline" size={20} color={colors.primary} />
+                <Text style={styles.passengerTitle}>1-ші жолаушы</Text>
               </View>
               <View style={styles.primaryBadge}>
                 <Text style={styles.primaryBadgeText}>Негізгі</Text>
               </View>
             </View>
 
-            {/* Поле ФИО */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Толық аты-жөні</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Мысалы: Ахметов Асқар"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor="#8A8FA0"
                 value={fullName}
                 onChangeText={setFullName}
               />
             </View>
 
-            {/* Поле Email */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Электронды пошта</Text>
               <TextInput
                 style={styles.input}
                 placeholder="example@mail.kz"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor="#8A8FA0"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
@@ -113,48 +115,45 @@ export default function PassengerInfoScreen({ navigation }) {
               />
             </View>
 
-            {/* Поле Құжат нөмірі */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>ЖСН / Төлқұжат нөмірі</Text>
               <TextInput
                 style={styles.input}
-                placeholder="12 таңбалы ЖСН"
-                placeholderTextColor="#94A3B8"
-                keyboardType="numeric"
+                placeholder="AB1234567"
+                placeholderTextColor="#8A8FA0"
+                autoCapitalize="characters"
                 value={idNumber}
                 onChangeText={setIdNumber}
               />
             </View>
 
-            {/* Сохранение данных */}
             <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Болашақ сапарлар үшін сақтау</Text>
               <Switch
                 value={saveDetails}
                 onValueChange={setSaveDetails}
-                trackColor={{ false: '#CBD5E1', true: '#0F2C59' }}
+                trackColor={{ false: '#CBD5E1', true: colors.primary }}
                 thumbColor="#FFFFFF"
               />
+              <Text style={styles.switchLabel}>Болашақ сапарлар үшін сақтау</Text>
             </View>
           </View>
 
-          {/* Кнопка добавления еще одного пассажира */}
+          {/* Добавить пассажира */}
           <TouchableOpacity style={styles.addPassengerBtn}>
-            <Text style={styles.addPassengerText}>+ Жолаушы қосу</Text>
+            <Ionicons name="person-add-outline" size={20} color={colors.primary} />
+            <Text style={styles.addPassengerText}>Жолаушы қосу</Text>
           </TouchableOpacity>
 
-          {/* Кнопка перехода к оплате */}
-          <TouchableOpacity 
-            style={styles.continueBtn}
-            onPress={() => navigation.navigate('BookingSummary')}
-          >
-            <Text style={styles.continueBtnText}>Төлемге өту  ➔</Text>
+          {/* К оплате */}
+          <TouchableOpacity style={styles.continueBtn} onPress={goToPayment}>
+            <Text style={styles.continueBtnText}>Төлемге өту</Text>
+            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
           </TouchableOpacity>
 
           <Text style={styles.termsText}>
-            Жалғастыру арқылы сіз біздің Плайдалану шарттарымен келісесіз.
+            Жалғастыру арқылы сіз біздің{' '}
+            <Text style={styles.termsLink}>Қызмет көрсету шарттарымен</Text> келісесіз.
           </Text>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -164,45 +163,15 @@ export default function PassengerInfoScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F9',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
   },
-  topHeader: {
+  stepper: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 22,
-    color: '#0F2C59',
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0F2C59',
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stepperContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'flex-start',
     marginBottom: 24,
   },
   stepItem: {
@@ -212,80 +181,64 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#DCE5FA',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
   },
-  stepDone: {
-    backgroundColor: '#0F2C59',
+  stepCircleReached: {
+    backgroundColor: colors.primary,
   },
-  stepActive: {
-    backgroundColor: '#0F2C59',
+  stepNumber: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.onSurfaceVariant,
   },
-  stepTextDone: {
+  stepNumberReached: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 13,
   },
-  stepTextActive: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 13,
+  stepLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
   },
-  stepTextInactive: {
-    color: '#64748B',
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
-  stepLabelDone: {
-    fontSize: 11,
-    color: '#0F2C59',
+  stepLabelReached: {
+    color: colors.primary,
     fontWeight: '600',
   },
-  stepLabelActive: {
-    fontSize: 11,
-    color: '#0F2C59',
-    fontWeight: 'bold',
-  },
-  stepLabelInactive: {
-    fontSize: 11,
-    color: '#94A3B8',
-  },
   stepLine: {
-    flex: 0.2,
+    flex: 1,
     height: 2,
-    backgroundColor: '#E2E8F0',
+    marginTop: 15,
     marginHorizontal: 8,
-    marginTop: -16,
+    backgroundColor: '#C3C6D6',
   },
   stepLineActive: {
-    backgroundColor: '#0F2C59',
-  },
-  titleSection: {
-    marginBottom: 20,
+    backgroundColor: colors.primary,
   },
   mainTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#0F2C59',
-    marginBottom: 4,
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.onSurface,
+    marginBottom: 6,
   },
   subTitle: {
-    fontSize: 13,
-    color: '#64748B',
-    lineHeight: 18,
+    fontSize: 15,
+    color: colors.onSurfaceVariant,
+    lineHeight: 22,
+    marginBottom: 20,
   },
   passengerCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -293,94 +246,98 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  passengerIcon: {
-    fontSize: 16,
-    marginRight: 8,
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   passengerTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.primary,
   },
   primaryBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 10,
+    backgroundColor: colors.mint,
+    paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
   primaryBadgeText: {
-    color: '#15803D',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  inputGroup: {
-    marginBottom: 14,
-  },
-  label: {
+    color: '#005236',
     fontSize: 12,
     fontWeight: '600',
-    color: '#475569',
-    marginBottom: 6,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.onSurface,
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.outline,
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: '#1E293B',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: colors.onSurface,
   },
   switchRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    gap: 10,
   },
   switchLabel: {
-    fontSize: 13,
-    color: '#334155',
-    fontWeight: '500',
+    fontSize: 15,
+    color: colors.onSurface,
   },
   addPassengerBtn: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
     borderWidth: 1.5,
-    borderColor: '#0F2C59',
+    borderColor: colors.primary,
     borderStyle: 'dashed',
     borderRadius: 16,
     paddingVertical: 14,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    marginBottom: 24,
+    marginBottom: 28,
   },
   addPassengerText: {
-    color: '#0F2C59',
-    fontSize: 14,
-    fontWeight: 'bold',
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: '700',
   },
   continueBtn: {
-    backgroundColor: '#0F2C59',
-    borderRadius: 12,
-    paddingVertical: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#0F2C59',
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: 16,
+    marginBottom: 14,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
-    marginBottom: 12,
   },
   continueBtnText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
   },
   termsText: {
     textAlign: 'center',
-    fontSize: 11,
-    color: '#94A3B8',
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+  },
+  termsLink: {
+    textDecorationLine: 'underline',
   },
 });
