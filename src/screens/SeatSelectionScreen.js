@@ -8,36 +8,49 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Header from '../components/Header';
+import { colors, fonts } from '../theme';
 
-export default function SeatSelectionScreen({ navigation }) {
-  const [selectedSeats, setSelectedSeats] = useState(['1A']);
+const ROWS = [1, 2, 3, 4, 5, 6, 7, 8];
+const WINDOW_LETTERS = ['A', 'B'];
+const AISLE_LETTERS = ['C', 'D'];
+const MAX_SEATS = 4;
+const CARRIAGE = '04';
 
-  // Определение занятых и доступных мест (заглушка)
-  const occupiedSeats = ['2A', '4A', '4B', '2C', '3C', '2D', '3D'];
+// Занятые места пока заглушка, потом будут приходить с бэкенда
+const OCCUPIED_SEATS = ['2A', '4A', '4B', '3C', '2D', '3D', '7A', '6B', '8C', '6D'];
+
+// Порядок для списка выбранных мест: по номеру ряда, затем по букве
+const sortSeats = (seats) =>
+  [...seats].sort((a, b) => parseInt(a, 10) - parseInt(b, 10) || a.localeCompare(b));
+
+export default function SeatSelectionScreen({ route, navigation }) {
+  const { train = {}, date, selectedClass = 'standard', price } = route.params || {};
+  const insets = useSafeAreaInsets();
+  const [selectedSeats, setSelectedSeats] = useState([]);
 
   const handleSeatPress = (seatId) => {
-    if (occupiedSeats.includes(seatId)) return; // Занято — нажать нельзя
+    if (OCCUPIED_SEATS.includes(seatId)) return;
 
     if (selectedSeats.includes(seatId)) {
       setSelectedSeats(selectedSeats.filter((s) => s !== seatId));
-    } else {
+    } else if (selectedSeats.length < MAX_SEATS) {
       setSelectedSeats([...selectedSeats, seatId]);
     }
   };
 
   const renderSeat = (seatId) => {
+    const isOccupied = OCCUPIED_SEATS.includes(seatId);
     const isSelected = selectedSeats.includes(seatId);
-    const isOccupied = occupiedSeats.includes(seatId);
 
     return (
       <TouchableOpacity
         key={seatId}
         disabled={isOccupied}
-        style={[
-          styles.seatBox,
-          isOccupied && styles.seatOccupied,
-          isSelected && styles.seatSelected,
-        ]}
+        activeOpacity={0.7}
+        style={[styles.seat, isOccupied && styles.seatOccupied, isSelected && styles.seatSelected]}
         onPress={() => handleSeatPress(seatId)}
       >
         <Text
@@ -53,121 +66,126 @@ export default function SeatSelectionScreen({ navigation }) {
     );
   };
 
+  const renderRow = (letter) => (
+    <View key={letter} style={styles.seatsRow}>
+      {ROWS.map((row) => renderSeat(`${row}${letter}`))}
+    </View>
+  );
+
+  const hasSelection = selectedSeats.length > 0;
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* Шапка */}
-        <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Орын таңдау</Text>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={{ fontSize: 16 }}>👤</Text>
-          </View>
-        </View>
+        <Header
+          title="Орын таңдау"
+          onBack={() => navigation.goBack()}
+          onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })}
+        />
 
         {/* Карточка поезда */}
         <View style={styles.trainCard}>
           <View style={styles.trainCardTop}>
-            <View>
-              <Text style={styles.trainSubTitle}>ПОЕЗД 402</Text>
-              <Text style={styles.trainTitle}>Intercity Express</Text>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.trainSubTitle}>ПОЕЗД {train.number}</Text>
+              <Text style={styles.trainTitle} numberOfLines={1}>{train.name}</Text>
             </View>
             <View style={styles.classBadge}>
-              <Text style={styles.classBadgeText}>Бірінші класс</Text>
+              <Text style={styles.classBadgeText}>
+                {selectedClass === 'first' ? 'Бірінші класс' : 'Стандарт'}
+              </Text>
             </View>
           </View>
 
           <View style={styles.routeTimes}>
             <View>
-              <Text style={styles.timeText}>08:45</Text>
-              <Text style={styles.stationSub}>Астана</Text>
+              <Text style={styles.timeText}>{train.departure_time || '--:--'}</Text>
+              <Text style={styles.stationSub}>{train.from_city}</Text>
             </View>
-            <Text style={styles.trainIconCenter}>🚆</Text>
+            <View style={styles.routeMiddle}>
+              <View style={styles.routeLine} />
+              <Ionicons name="train" size={20} color={colors.primary} style={{ marginHorizontal: 10 }} />
+              <View style={styles.routeLine} />
+            </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.timeText}>11:30</Text>
-              <Text style={styles.stationSub}>Алматы</Text>
+              <Text style={styles.timeText}>{train.arrival_time || '--:--'}</Text>
+              <Text style={styles.stationSub}>{train.to_city}</Text>
             </View>
           </View>
         </View>
 
-        {/* Легенда (Легенда мест) */}
+        {/* Легенда */}
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBox, styles.seatAvailableBorder]} />
+            <View style={[styles.legendBox, styles.legendAvailable]} />
             <Text style={styles.legendText}>Бос</Text>
           </View>
-
           <View style={styles.legendItem}>
-            <View style={[styles.legendBox, styles.legendSelectedBg]} />
+            <View style={[styles.legendBox, styles.legendSelected]} />
             <Text style={styles.legendText}>Таңдалды</Text>
           </View>
-
           <View style={styles.legendItem}>
-            <View style={[styles.legendBox, styles.legendOccupiedBg]} />
+            <View style={[styles.legendBox, styles.legendOccupied]} />
             <Text style={styles.legendText}>Бос емес</Text>
           </View>
         </View>
 
-        {/* Схема Вагона */}
-        <View style={styles.carriageContainer}>
+        {/* Схема вагона */}
+        <View style={styles.carriage}>
           <View style={styles.carriageHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.carriageIcon}>🚆</Text>
-              <Text style={styles.carriageTitle}> Вагон 04</Text>
+              <Ionicons name="train" size={20} color={colors.primary} style={{ marginRight: 8 }} />
+              <Text style={styles.carriageTitle}>Вагон {CARRIAGE}</Text>
             </View>
-            <Text style={styles.carriageAmenities}>🚻 ☕</Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Ionicons name="male-female-outline" size={20} color={colors.onSurfaceVariant} />
+              <Ionicons name="cafe-outline" size={20} color={colors.onSurfaceVariant} />
+            </View>
           </View>
 
           <Text style={styles.sideLabel}>Терезе жағы</Text>
 
-          {/* Ряды возле окна A & B */}
-          <View style={styles.seatsRow}>
-            {['1A', '2A', '3A', '4A', '5A'].map(renderSeat)}
-          </View>
-          <View style={[styles.seatsRow, { marginBottom: 20 }]}>
-            {['1B', '2B', '3B', '4B', '5B'].map(renderSeat)}
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View>
+              {WINDOW_LETTERS.map(renderRow)}
 
-          {/* Проход (Aisle) */}
-          <View style={styles.aisleBox}>
-            <Text style={styles.aisleText}>Ө Т У  Ж О Л Ы</Text>
-          </View>
+              <View style={styles.aisleBar}>
+                <Text style={styles.aisleText}>Ө Т У  Ж О Л Ы</Text>
+              </View>
 
-          {/* Ряды возле прохода C & D */}
-          <View style={[styles.seatsRow, { marginTop: 20 }]}>
-            {['1C', '2C', '3C', '4C', '5C'].map(renderSeat)}
-          </View>
-          <View style={styles.seatsRow}>
-            {['1D', '2D', '3D', '4D', '5D'].map(renderSeat)}
-          </View>
+              {AISLE_LETTERS.map(renderRow)}
+            </View>
+          </ScrollView>
 
-          <Text style={[styles.sideLabel, { marginTop: 12, textAlign: 'right' }]}>Жол жағы</Text>
+          <Text style={[styles.sideLabel, { marginTop: 12, marginBottom: 0 }]}>Жол жағы</Text>
         </View>
-
       </ScrollView>
 
-      {/* Фиксированная плашка снизу */}
-      <View style={styles.bottomBar}>
+      {/* Нижняя панель */}
+      <View style={[styles.bottomBar, { paddingBottom: 16 + insets.bottom }]}>
         <View>
-          <Text style={styles.bottomSub}>Таңдалған орындар:</Text>
+          <Text style={styles.bottomSub}>Таңдалған орындар</Text>
           <Text style={styles.selectedSeatsList}>
-            {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'Ештеңе таңдалмады'}
+            {hasSelection ? sortSeats(selectedSeats).join(', ') : 'Жоқ'}
           </Text>
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.confirmBtn,
-            selectedSeats.length === 0 && styles.disabledConfirmBtn,
-          ]}
-          disabled={selectedSeats.length === 0}
-          onPress={() => navigation.navigate('PassengerInfo')}
+          style={[styles.confirmBtn, !hasSelection && styles.confirmBtnDisabled]}
+          disabled={!hasSelection}
+          onPress={() =>
+            navigation.navigate('PassengerInfo', {
+              train,
+              date,
+              selectedClass,
+              price,
+              seats: sortSeats(selectedSeats),
+              carriage: CARRIAGE,
+            })
+          }
         >
-          <Text style={styles.confirmBtnText}>Растау</Text>
+          <Text style={styles.confirmBtnText}>Таңдауды растау</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -177,77 +195,51 @@ export default function SeatSelectionScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F9',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
-  },
-  topHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 22,
-    color: '#0F2C59',
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0F2C59',
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingBottom: 130,
   },
   trainCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 20,
     padding: 16,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     elevation: 2,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 8,
   },
   trainCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   trainSubTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.5,
   },
   trainTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.primary,
   },
   classBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.mint,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
   },
   classBadgeText: {
-    color: '#15803D',
+    color: '#005236',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   routeTimes: {
     flexDirection: 'row',
@@ -255,123 +247,131 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1E293B',
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.onSurface,
   },
   stationSub: {
     fontSize: 11,
-    color: '#64748B',
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
   },
-  trainIconCenter: {
-    fontSize: 20,
+  routeMiddle: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  routeLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: '#CBD5E1',
   },
   legendRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     marginBottom: 20,
+    paddingHorizontal: 4,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   legendBox: {
-    width: 18,
-    height: 18,
-    borderRadius: 6,
-    marginRight: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    marginRight: 8,
   },
-  seatAvailableBorder: {
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
+  legendAvailable: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.outline,
   },
-  legendSelectedBg: {
-    backgroundColor: '#0F2C59',
+  legendSelected: {
+    backgroundColor: colors.primary,
   },
-  legendOccupiedBg: {
-    backgroundColor: '#E2E8F0',
+  legendOccupied: {
+    backgroundColor: '#E6EBFB',
   },
   legendText: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: 13,
+    color: colors.onSurface,
     fontWeight: '600',
   },
-  carriageContainer: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 24,
+  carriage: {
+    backgroundColor: '#F1F3FF',
+    borderRadius: 20,
     padding: 16,
+    paddingLeft: 20,
     borderWidth: 1,
     borderColor: '#E0E7FF',
+    borderLeftWidth: 8,
+    borderLeftColor: '#D5DCF0',
   },
   carriageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  carriageIcon: {
-    fontSize: 18,
+    marginBottom: 20,
   },
   carriageTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0F2C59',
-  },
-  carriageAmenities: {
-    fontSize: 14,
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.onSurface,
   },
   sideLabel: {
-    fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+    fontWeight: '500',
+    marginBottom: 12,
   },
   seatsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    gap: 10,
+    marginBottom: 10,
   },
-  seatBox: {
+  seat: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.outline,
     justifyContent: 'center',
     alignItems: 'center',
   },
   seatOccupied: {
-    backgroundColor: '#E2E8F0',
-    borderColor: '#E2E8F0',
+    backgroundColor: '#E6EBFB',
+    borderColor: '#E6EBFB',
   },
   seatSelected: {
-    backgroundColor: '#0F2C59',
-    borderColor: '#0F2C59',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   seatText: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#334155',
+    fontFamily: fonts.mono,
+    color: colors.onSurface,
   },
   seatTextOccupied: {
-    color: '#94A3B8',
+    color: '#9AA3B8',
   },
   seatTextSelected: {
     color: '#FFFFFF',
   },
-  aisleBox: {
-    paddingVertical: 6,
-    backgroundColor: '#E0E7FF',
+  aisleBar: {
+    height: 48,
+    marginVertical: 24,
+    backgroundColor: '#E6EBFB',
     borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 4,
   },
   aisleText: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#6366F1',
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.onSurfaceVariant,
     letterSpacing: 3,
   },
   bottomBar: {
@@ -379,40 +379,36 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: colors.card,
+    paddingTop: 16,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
   },
   bottomSub: {
-    fontSize: 11,
-    color: '#64748B',
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
   },
   selectedSeatsList: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.primary,
   },
   confirmBtn: {
-    backgroundColor: '#0F2C59',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 28,
+    paddingVertical: 16,
     borderRadius: 12,
   },
-  disabledConfirmBtn: {
-    backgroundColor: '#94A3B8',
+  confirmBtnDisabled: {
+    backgroundColor: '#9E9E9E',
   },
   confirmBtnText: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 14,
   },
 });
