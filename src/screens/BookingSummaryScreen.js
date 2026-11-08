@@ -8,25 +8,20 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import Header from '../components/Header';
+import { colors } from '../theme';
 
-export default function BookingSummaryScreen({ navigation }) {
+export default function BookingSummaryScreen({ route, navigation }) {
   const [selectedPayment, setSelectedPayment] = useState('card'); // 'apple' или 'card'
+  const { train = {}, date, selectedClass = "standard", price = 0, seats = [], carriage, passenger = {}, } = route.params || {};
+
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Шапка */}
-        <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Төлем және растау</Text>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={{ fontSize: 16 }}>👤</Text>
-          </View>
-        </View>
+        <Header title="Төлем және растау" centered onBack={() => navigation.goBack()} onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })} />
 
         {/* Карточка: Детали сапары (Journey Summary) */}
         <View style={styles.card}>
@@ -161,35 +156,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 110,
-  },
-  topHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 22,
-    color: '#0F2C59',
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0F2C59',
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   card: {
     backgroundColor: '#FFFFFF',
