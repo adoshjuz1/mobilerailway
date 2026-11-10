@@ -42,19 +42,16 @@ export default function MyTripsScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Шапка */}
-        <View style={styles.topHeader}>
-          <Text style={styles.hamburgerIcon}>☰</Text>
-          <Text style={styles.brandTitle}>Railway Connect</Text>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={{ fontSize: 16 }}>👤</Text>
-          </View>
-        </View>
+        <Header
+          onAvatarPress={() =>
+            navigation.navigate("Main", { screen: "ProfileTab" })
+          }
+        />
 
         {/* Заголовок страницы */}
         <View style={styles.titleSection}>
