@@ -32,33 +32,41 @@ const generateTicketId = () => {
   return `ALT-${digits}-${suffix}`;
 };
 
+const getSeatText = (seats) => {
+  if (seats.length !== 1) return seats.join(', ');
+  const side = ['A', 'B'].includes(seats[0].slice(-1)) ? 'Терезе жағы' : 'Жол жағы';
+  return `${seats[0]} (${side})`;
+}
 
 
-export default function TicketConfirmationScreen({ navigation }) {
+export default function TicketConfirmationScreen({ route, navigation }) {
+  const { train = {}, date, seats = [], carriage } = route.params || {};
+  const [ticketId] = useState(generateTicketId);
+
+  const handleShare = () => {
+    Share.share({
+      message: `Билет ${ticketId}: ${train.from_city} → ${train.to_city}, ${formatDate(date)}, ${train.departure_time}. Вагон ${carriage}, орын ${seats.join(', ')}.`,
+    });
+  };
+
+  const handleWallet = () => {
+    Alert.alert('Әмиян', 'Скоро братишка, скоро');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* Шапка */}
-        <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => navigation.navigate('Main')} style={styles.backBtn}>
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Билет расталды</Text>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={{ fontSize: 16 }}>👤</Text>
-          </View>
-        </View>
+        <Header title="Билет расталды" onBack={() => navigation.navigate('Main')} onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })} />
 
         {/* Успешный статус */}
         <View style={styles.successContainer}>
           <View style={styles.successIconBox}>
-            <Text style={styles.successCheck}>✓</Text>
+            <IonIcons name="checkmark-circle-outline" size={40} color="#00513A" />
           </View>
-          <Text style={styles.successTitle}>Брондау сәтті аяқталды!</Text>
+          <Text style={styles.successTitle}>Брондау расталды!</Text>
           <Text style={styles.successSub}>
-            Сапарыңыз дайын. Вокзалда көрсетуге арналған билетіңіз төменде дайын тұр.
+            Сапарыңыз дайын. Билетіңіз отырғызу үшін төменде дайын тұр.
           </Text>
         </View>
 
@@ -67,7 +75,7 @@ export default function TicketConfirmationScreen({ navigation }) {
           <View style={styles.ticketTopRow}>
             <View>
               <Text style={styles.ticketIdLabel}>БИЛЕТ НӨМІРІ</Text>
-              <Text style={styles.ticketIdValue}>RC-8842-XLM</Text>
+              <Text style={styles.ticketIdValue}>{ticketId}</Text>
             </View>
             <View style={styles.statusBadge}>
               <Text style={styles.statusBadgeText}>Уақытында</Text>
@@ -77,52 +85,52 @@ export default function TicketConfirmationScreen({ navigation }) {
           {/* Маршрут билета */}
           <View style={styles.routeSection}>
             <View style={styles.stationBlock}>
-              <Text style={styles.stationCity}>London King's Cross</Text>
-              <Text style={styles.platformText}>Платформа 9¾</Text>
-              <Text style={styles.timeText}>09:45</Text>
+              <Text style={styles.stationCity}>{train.from_city}</Text>
+              <Text style={styles.platformText}>{DEPARTURE_PLATFORM}</Text>
+              <Text style={styles.timeText}>{train.departure_time}</Text>
             </View>
 
-            <View style={styles.stationCenterLine}>
-              <View style={styles.dotBlue} />
-              <View style={styles.trackLine} />
-              <View style={styles.dotOutline} />
+            <View style={styles.routeDots}>
+              <View style={styles.dotFilled} />
+              <View style={styles.dotRing} />
             </View>
 
-            <View style={[styles.stationBlock, { alignItems: 'flex-end' }]}>
-              <Text style={styles.stationCity}>Edinburgh Waverley</Text>
-              <Text style={styles.platformText}>Платформа 2</Text>
-              <Text style={styles.timeText}>14:12</Text>
+            <View style={[styles.stationBlock, styles.stationBlockRight]}>
+              <Text style={styles.stationCity}>{train.to_city}</Text>
+              <Text style={styles.platformText}>{ARRIVAL_PLATFORM}</Text>
+              <Text style={styles.timeText}>{train.arrival_time}</Text>
             </View>
           </View>
 
-          <View style={styles.dashedDivider} />
+          <View style={styles.divider} />
 
           {/* Детали даты и места */}
-          <View style={styles.ticketDetailsRow}>
-            <View>
+          <View style={styles.detailsRow}>
+            <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Күні</Text>
-              <Text style={styles.detailValue}>24 Қаз, 2026</Text>
+              <Text style={styles.detailValue}>{formatDate(date)}</Text>
             </View>
-            <View>
+            <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Вагон</Text>
-              <Text style={styles.detailValue}>Coach B</Text>
+              <Text style={styles.detailValue}>{carriage}</Text>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
+            <View style={[styles.detailItem, styles.detailItemRight]}>
               <Text style={styles.detailLabel}>Орын</Text>
-              <Text style={styles.detailValue}>42A (Терезе)</Text>
+              <Text style={[styles.detailValue, styles.textRight]}>{getSeatText(seats)}</Text>
             </View>
           </View>
 
+          <View style={styles.dishedDivider} />
+
           {/* QR-код заглушка */}
-          <View style={styles.qrContainer}>
+          <View style={styles.qrFrame}>
             <View style={styles.qrBox}>
-              <Text style={styles.qrEmoji}>🔲🚆🔲</Text>
-              <Text style={styles.qrCodeText}>||| | |||| || |:::|| |||</Text>
+              <IonIcons name="qr-code" size={130} color="#FFFFFF" />
             </View>
-            <Text style={styles.qrInstruction}>
-              Турникеттен өткен кезде немесе проводник сұрағанда осы QR-кодты сканерлеңіз.
-            </Text>
           </View>
+          <Text style={styles.qrInstruction}>
+            Қақпада немесе жол жетекшісі сұрағанда осы QR-кодты көрсетіңіз.
+          </Text>
         </View>
 
         {/* Кнопки действий */}
