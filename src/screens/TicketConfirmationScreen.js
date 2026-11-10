@@ -92,9 +92,9 @@ export default function TicketConfirmationScreen({ route, navigation }) {
 
 
             <View style={[styles.stationBlock, styles.stationBlockRight]}>
-              <Text style={styles.stationCity}>{train.to_city}</Text>
-              <Text style={styles.platformText}>{ARRIVAL_PLATFORM}</Text>
-              <Text style={styles.timeText}>{train.arrival_time}</Text>
+              <Text style={[styles.stationCity, styles.textRight]}>{train.to_city}</Text>
+              <Text style={[styles.platformText, styles.textRight]}>{ARRIVAL_PLATFORM}</Text>
+              <Text style={[styles.timeText, styles.textRight]}>{train.arrival_time}</Text>
             </View>
           </View>
 
@@ -115,6 +115,8 @@ export default function TicketConfirmationScreen({ route, navigation }) {
               <Text style={[styles.detailValue, styles.textRight]}>{getSeatText(seats)}</Text>
             </View>
           </View>
+
+          <View style={styles.dashedDivider} />
 {/* куаркодзаглушка */}
           <View style={styles.qrFrame}>
             <View style={styles.qrBox}>
