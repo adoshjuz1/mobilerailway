@@ -8,91 +8,153 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../components/Header';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
+
+const BOOKING_FEE = 450;
+
+// 2026-10-16 -> 16.10.2026
+const formatDate = (iso) => {
+  if (!iso) return '';
+  const [year, month, day] = iso.split('-');
+  return `${day}.${month}.${year}`;
+};
 
 export default function BookingSummaryScreen({ route, navigation }) {
-  const [selectedPayment, setSelectedPayment] = useState('card'); // 'apple' или 'card'
-  const { train = {}, date, selectedClass = "standard", price = 0, seats = [], carriage, passenger = {}, } = route.params || {};
+  const {
+    train = {},
+    date,
+    selectedClass = 'standard',
+    price = 0,
+    seats = [],
+    carriage,
+    passenger = {},
+  } = route.params || {};
 
+  const insets = useSafeAreaInsets();
+  const [selectedPayment, setSelectedPayment] = useState('card'); // 'apple' или 'card'
+
+  const classLabel = selectedClass === 'first' ? '1-ші класс' : 'Стандарт';
+  const arrivesNextDay = train.arrival_time < train.departure_time;
+  const departureText = `${formatDate(date)} • ${train.departure_time}`;
+  const arrivalText = arrivesNextDay
+    ? `Келесі күні • ${train.arrival_time}`
+    : `${formatDate(date)} • ${train.arrival_time}`;
+
+  const ticketCount = Math.max(seats.length, 1);
+  const total = price * ticketCount;
+  const fare = Math.max(total - BOOKING_FEE, 0);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        <Header title="Төлем және растау" centered onBack={() => navigation.goBack()} onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })} />
+        <Header
+          title="Төлем және растау"
+          centered
+          onBack={() => navigation.goBack()}
+          onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })}
+        />
 
-        {/* Карточка: Детали сапары (Journey Summary) */}
+        {/* Сапар мәліметтері */}
         <View style={styles.card}>
           <Text style={styles.cardSectionTitle}>Сапар мәліметтері</Text>
 
           <View style={styles.journeyRow}>
-            <View style={styles.stationDotBlue} />
-            <View style={{ flex: 1, marginLeft: 10 }}>
+            <View style={styles.dotColumn}>
+              <View style={styles.dotHalo}>
+                <View style={styles.dotFilled} />
+              </View>
+            </View>
+            <View style={styles.journeyInfo}>
               <Text style={styles.stationLabel}>ШЫҒУ</Text>
-              <Text style={styles.stationName}>Астана (Нұрлы Жол)</Text>
-              <Text style={styles.timeLabel}>Бүгін • 14:30</Text>
+              <Text style={styles.stationName}>{train.from_city}</Text>
+              <Text style={styles.timeLabel}>{departureText}</Text>
             </View>
           </View>
 
           <View style={styles.journeyRow}>
-            <View style={styles.stationRing} />
-            <View style={{ flex: 1, marginLeft: 10 }}>
+            <View style={styles.dotColumn}>
+              <View style={styles.dotRing} />
+            </View>
+            <View style={styles.journeyInfo}>
               <Text style={styles.stationLabel}>КЕЛУ</Text>
-              <Text style={styles.stationName}>Алматы 2</Text>
-              <Text style={styles.timeLabel}>Бүгін • 17:47</Text>
+              <Text style={styles.stationName}>{train.to_city}</Text>
+              <Text style={styles.timeLabel}>{arrivalText}</Text>
             </View>
           </View>
 
-          <View style={styles.cardDivider} />
+          <View style={styles.dashedDivider} />
 
           <View style={styles.trainInfoRow}>
-            <Text style={styles.trainInfoText}>🚆 Intercity ES9032</Text>
-            <Text style={styles.trainInfoText}>💺 Вагон 07, Орын 42</Text>
+            <View style={styles.trainInfoItem}>
+              <Ionicons name="train" size={20} color={colors.primary} />
+              <Text style={styles.trainInfoText}>{train.name} №{train.number}</Text>
+            </View>
+            <View style={styles.trainInfoItem}>
+              <Ionicons name="grid-outline" size={20} color={colors.primary} />
+              <Text style={styles.trainInfoText}>Вагон {carriage}, Орын {seats.join(', ')}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Карточка: Пассажиры */}
+        {/* Жолаушылар */}
         <View style={styles.card}>
-          <Text style={styles.cardSectionTitle}>Жолаушылар</Text>
+          <View style={styles.cardTitleRow}>
+            <Ionicons name="people-outline" size={22} color={colors.primary} />
+            <Text style={[styles.cardSectionTitle, { marginBottom: 0 }]}>Жолаушылар</Text>
+          </View>
+
           <View style={styles.passengerBox}>
             <View>
-              <Text style={styles.passengerName}>Алекс Уолкер</Text>
-              <Text style={styles.passengerSub}>Ересек • Стандарт Премьер</Text>
+              <Text style={styles.passengerName}>{passenger.fullName || 'Аты көрсетілмеген'}</Text>
+              <Text style={styles.passengerSub}>Ересек • {classLabel}</Text>
             </View>
-            <Text style={styles.checkedIcon}>✅</Text>
+            <Ionicons name="checkmark-circle-outline" size={22} color="#00714D" />
           </View>
+
+          <TouchableOpacity style={styles.addTravelerBtn} onPress={() => navigation.goBack()}>
+            <View style={styles.addTravelerIcon}>
+              <Ionicons name="add" size={20} color={colors.primary} />
+            </View>
+            <Text style={styles.addTravelerText}>Басқа жолаушы қосу</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Карточка: Способ оплаты */}
-        <Text style={[styles.cardSectionTitle, { marginBottom: 10 }]}>Төлем әдісі</Text>
-        
+        {/* Төлем әдісі */}
+        <Text style={[styles.cardSectionTitle, { marginTop: 4 }]}>Төлем әдісі</Text>
+
         {/* Apple Pay */}
-        <TouchableOpacity 
-          style={[styles.paymentOption, selectedPayment === 'apple' && styles.paymentActive]}
-          onPress={() => setSelectedPayment('apple')}
-        >
-          <Text style={styles.paymentTitle}> Apple Pay</Text>
-          <View style={styles.radioOuter}>
-            {selectedPayment === 'apple' && <View style={styles.radioInner} />}
+        <TouchableOpacity style={styles.applePay} onPress={() => setSelectedPayment('apple')}>
+          <View style={styles.paymentTitleRow}>
+            <Ionicons name="logo-apple" size={24} color="#FFFFFF" />
+            <Text style={styles.applePayText}>Apple Pay</Text>
+          </View>
+          <View style={[styles.radioOuter, styles.radioOuterLight]}>
+            {selectedPayment === 'apple' && <View style={[styles.radioInner, styles.radioInnerLight]} />}
           </View>
         </TouchableOpacity>
 
-        {/* Credit Card */}
-        <TouchableOpacity 
-          style={[styles.paymentOptionCard, selectedPayment === 'card' && styles.paymentActive]}
+        {/* Банк картасы */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          style={[styles.cardOption, selectedPayment === 'card' && styles.cardOptionActive]}
           onPress={() => setSelectedPayment('card')}
         >
           <View style={styles.cardTopRow}>
-            <Text style={styles.paymentTitle}>💳 Банк картасы</Text>
+            <View style={styles.paymentTitleRow}>
+              <Ionicons name="card-outline" size={22} color={colors.primary} />
+              <Text style={styles.paymentTitle}>Банк картасы</Text>
+            </View>
             <View style={styles.radioOuter}>
               {selectedPayment === 'card' && <View style={styles.radioInner} />}
             </View>
           </View>
 
           <View style={styles.cardNumberBox}>
-            <Text style={styles.cardNumberText}>•••• •••• •••• 4242</Text>
+            <Text style={styles.cardNumberText}>**** **** **** 4242</Text>
             <Text style={styles.visaText}>VISA</Text>
           </View>
 
@@ -106,42 +168,44 @@ export default function BookingSummaryScreen({ route, navigation }) {
           </View>
         </TouchableOpacity>
 
-        {/* Чек / Итоги стоимости */}
-        <View style={styles.card}>
+        {/* Итоги стоимости */}
+        <View style={styles.priceCard}>
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Стандарт Премьер x1</Text>
-            <Text style={styles.priceValue}>142 000 ₸</Text>
+            <Text style={styles.priceLabel}>{classLabel} x{ticketCount}</Text>
+            <Text style={styles.priceValue}>{fare} ₸</Text>
           </View>
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Орын брондау</Text>
-            <Text style={styles.priceValueFree}>Тегін</Text>
+            <Text style={styles.priceValue}>Қосылған</Text>
           </View>
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Қызмет көрсету ақысы</Text>
-            <Text style={styles.priceValue}>4 500 ₸</Text>
+            <Text style={styles.priceLabel}>Брондау ақысы</Text>
+            <Text style={styles.priceValue}>{BOOKING_FEE} ₸</Text>
           </View>
 
           <View style={styles.cardDivider} />
 
           <View style={styles.priceRow}>
             <Text style={styles.totalLabel}>Барлығы</Text>
-            <Text style={styles.totalValue}>146 500 ₸</Text>
+            <Text style={styles.totalValue}>{total} ₸</Text>
           </View>
         </View>
 
         <Text style={styles.termsText}>
-          «Төлеу» батырмасын басу арқылы сіз Railway Connect қызмет көрсету шарттарымен келісесіз.
+          «Төлеу» батырмасын басу арқылы сіз Railway Connect{' '}
+          <Text style={styles.termsLink}>Қызмет көрсету шарттарымен</Text> және{' '}
+          <Text style={styles.termsLink}>Құпиялылық саясатымен</Text> келісесіз.
         </Text>
-
       </ScrollView>
 
       {/* Нижняя кнопка оплаты */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity 
+      <View style={[styles.bottomBar, { paddingBottom: 16 + insets.bottom }]}>
+        <TouchableOpacity
           style={styles.payButton}
-          onPress={() => navigation.navigate('TicketConfirmation')}
+          onPress={() => navigation.navigate('TicketConfirmation', { ...route.params, total })}
         >
-          <Text style={styles.payButtonText}>🔒  Қазір төлеу • 146 500 ₸</Text>
+          <Ionicons name="lock-closed" size={20} color="#FFFFFF" />
+          <Text style={styles.payButtonText}>Қазір төлеу • {total} ₸</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -151,167 +215,240 @@ export default function BookingSummaryScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F9',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 110,
+    paddingBottom: 140,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 20,
     padding: 16,
     marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   cardSectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.onSurface,
     marginBottom: 14,
   },
-  journeyRow: {
+  cardTitleRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  stationDotBlue: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#0F2C59',
-    marginTop: 4,
-  },
-  stationRing: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#0F2C59',
-    backgroundColor: '#FFFFFF',
-    marginTop: 4,
-  },
-  stationLabel: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#64748B',
-  },
-  stationName: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#1E293B',
-  },
-  timeLabel: {
-    fontSize: 12,
-    color: '#64748B',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#C9D3EE',
     marginVertical: 12,
+  },
+  dashedDivider: {
+    height: 1,
+    borderWidth: 1,
+    borderColor: '#D5DCF0',
+    borderStyle: 'dashed',
+    borderRadius: 1,
+    marginVertical: 14,
+  },
+
+  // Сапар мәліметтері
+  journeyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  dotColumn: {
+    width: 24,
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  dotHalo: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#DCE5FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dotFilled: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.primary,
+  },
+  dotRing: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.card,
+  },
+  journeyInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  stationLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.5,
+  },
+  stationName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.onSurface,
+  },
+  timeLabel: {
+    fontSize: 15,
+    color: colors.onSurfaceVariant,
   },
   trainInfoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 12,
+  },
+  trainInfoItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   trainInfoText: {
-    fontSize: 12,
+    flex: 1,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#475569',
+    color: colors.onSurface,
   },
+
+  // Жолаушылар
   passengerBox: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#E6EEFF',
     padding: 12,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    marginBottom: 12,
   },
   passengerName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1E293B',
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.onSurface,
   },
   passengerSub: {
-    fontSize: 11,
-    color: '#64748B',
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
   },
-  checkedIcon: {
-    fontSize: 16,
-  },
-  paymentOption: {
+  addTravelerBtn: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1.5,
+    gap: 12,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 12,
   },
-  paymentOptionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#0F2C59',
-  },
-  paymentActive: {
-    borderColor: '#0F2C59',
-  },
-  paymentTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#0F2C59',
-  },
-  radioOuter: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#0F2C59',
+  addTravelerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#CFDCF7',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  addTravelerText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+
+  // Төлем әдісі
+  paymentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  applePay: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.onSurface,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
+  },
+  applePayText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  cardOption: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.outline,
+  },
+  cardOptionActive: {
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  paymentTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.onSurface,
+  },
+  radioOuter: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioOuterLight: {
+    borderColor: '#FFFFFF',
+  },
   radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#0F2C59',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.primary,
+  },
+  radioInnerLight: {
+    backgroundColor: '#FFFFFF',
   },
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   cardNumberBox: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    padding: 12,
+    backgroundColor: '#E6EEFF',
+    padding: 14,
     borderRadius: 10,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   cardNumberText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
+    fontSize: 15,
+    fontFamily: fonts.mono,
+    color: colors.onSurface,
   },
   visaText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#1D4ED8',
+    fontWeight: '700',
+    color: colors.primary,
   },
   cardDetailsRow: {
     flexDirection: 'row',
@@ -319,77 +456,83 @@ const styles = StyleSheet.create({
   },
   cardSmallInput: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    padding: 10,
+    backgroundColor: '#E6EEFF',
+    padding: 14,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
   },
   smallInputText: {
-    fontSize: 13,
-    color: '#475569',
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: fonts.mono,
+    color: colors.onSurface,
+  },
+
+  // Итоги стоимости
+  priceCard: {
+    backgroundColor: '#E6EEFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
   },
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
   },
   priceLabel: {
-    fontSize: 13,
-    color: '#64748B',
+    fontSize: 15,
+    color: colors.onSurfaceVariant,
   },
   priceValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1E293B',
-  },
-  priceValueFree: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#16A34A',
+    fontSize: 15,
+    fontFamily: fonts.mono,
+    color: colors.onSurface,
   },
   totalLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.onSurface,
   },
   totalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.primary,
   },
   termsText: {
     textAlign: 'center',
-    fontSize: 11,
-    color: '#94A3B8',
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.onSurfaceVariant,
     paddingHorizontal: 10,
   },
+  termsLink: {
+    textDecorationLine: 'underline',
+  },
+
+  // Нижняя кнопка
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    backgroundColor: colors.card,
+    paddingTop: 16,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
   },
   payButton: {
-    backgroundColor: '#0F2C59',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 16,
-    alignItems: 'center',
   },
   payButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
   },
 });
