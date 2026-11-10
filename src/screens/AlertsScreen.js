@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,7 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
   Switch,
-} from 'react-native';
+} from "react-native";
 
 export default function AlertsScreen({ navigation }) {
   const [urgentDelays, setUrgentDelays] = useState(true);
@@ -17,8 +17,10 @@ export default function AlertsScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Шапка */}
         <View style={styles.topHeader}>
           <Text style={styles.hamburgerIcon}>☰</Text>
@@ -32,7 +34,8 @@ export default function AlertsScreen({ navigation }) {
         <View style={styles.titleSection}>
           <Text style={styles.mainHeading}>Ескертулер мен хабарламалар</Text>
           <Text style={styles.subHeading}>
-            Сапар туралы өзекті ақпараттан және платформа өзгерістерінен хабардар болуыңыз.
+            Сапар туралы өзекті ақпараттан және платформа өзгерістерінен
+            хабардар болуыңыз.
           </Text>
         </View>
 
@@ -43,13 +46,15 @@ export default function AlertsScreen({ navigation }) {
               <Text style={styles.switchIcon}>⚠️</Text>
               <View>
                 <Text style={styles.switchTitle}>Шұғыл кешігулер</Text>
-                <Text style={styles.switchSub}>Қызмет үзілістері туралы жедел хабарламалар</Text>
+                <Text style={styles.switchSub}>
+                  Қызмет үзілістері туралы жедел хабарламалар
+                </Text>
               </View>
             </View>
             <Switch
               value={urgentDelays}
               onValueChange={setUrgentDelays}
-              trackColor={{ false: '#CBD5E1', true: '#0F2C59' }}
+              trackColor={{ false: "#CBD5E1", true: "#0F2C59" }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -61,13 +66,15 @@ export default function AlertsScreen({ navigation }) {
               <Text style={styles.switchIcon}>🎟️</Text>
               <View>
                 <Text style={styles.switchTitle}>Брондау растаулары</Text>
-                <Text style={styles.switchSub}>Квитанциялар мен билет жаңартулары</Text>
+                <Text style={styles.switchSub}>
+                  Квитанциялар мен билет жаңартулары
+                </Text>
               </View>
             </View>
             <Switch
               value={bookingConfirmations}
               onValueChange={setBookingConfirmations}
-              trackColor={{ false: '#CBD5E1', true: '#0F2C59' }}
+              trackColor={{ false: "#CBD5E1", true: "#0F2C59" }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -84,7 +91,8 @@ export default function AlertsScreen({ navigation }) {
 
           <Text style={styles.alertTitle}>Платформа өзгерді: Поезд 2042</Text>
           <Text style={styles.alertDesc}>
-            Сағат 09:45-тегі Астана бағытындағы поезд техникалық кешігуге байланысты 12-ші платформадан жөнелтіледі.
+            Сағат 09:45-тегі Астана бағытындағы поезд техникалық кешігуге
+            байланысты 12-ші платформадан жөнелтіледі.
           </Text>
 
           <View style={styles.actionRow}>
@@ -108,12 +116,13 @@ export default function AlertsScreen({ navigation }) {
 
           <Text style={styles.alertTitle}>Билет берілді: Алматы 2</Text>
           <Text style={styles.alertDesc}>
-            14:20 сапарына арналған электронды билетіңіз дайын. Турникетте QR-кодты дайындап қойыңыз.
+            14:20 сапарына арналған электронды билетіңіз дайын. Турникетте
+            QR-кодты дайындап қойыңыз.
           </Text>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.primaryActionBtn}
-            onPress={() => navigation.navigate('TicketConfirmation')}
+            onPress={() => navigation.navigate("TicketConfirmation")}
           >
             <Text style={styles.primaryActionText}>Билетті көру</Text>
           </TouchableOpacity>
@@ -130,7 +139,8 @@ export default function AlertsScreen({ navigation }) {
 
           <Text style={styles.alertTitle}>Жаңа Терминал Wi-Fi</Text>
           <Text style={styles.alertDesc}>
-            Барлық күту залында тегін 5G Wi-Fi іске қосылды. 'RailwayConnect_Free' желісіне қосылыңыз.
+            Барлық күту залында тегін 5G Wi-Fi іске қосылды.
+            'RailwayConnect_Free' желісіне қосылыңыз.
           </Text>
         </View>
 
@@ -145,10 +155,10 @@ export default function AlertsScreen({ navigation }) {
 
           <Text style={styles.alertTitle}>Поезд 112: Келу қалыпты</Text>
           <Text style={styles.alertDesc}>
-            Таңертеңгі қала маңындағы поездар 99% дәлдікпен кешікпей жүріп жатыр. Қауіпсіз сапар!
+            Таңертеңгі қала маңындағы поездар 99% дәлдікпен кешікпей жүріп
+            жатыр. Қауіпсіз сапар!
           </Text>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -157,67 +167,67 @@ export default function AlertsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F9',
+    backgroundColor: "#F4F6F9",
   },
   scrollContent: {
     padding: 20,
     paddingBottom: 100,
   },
   topHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   hamburgerIcon: {
     fontSize: 22,
-    color: '#0F2C59',
+    color: "#0F2C59",
   },
   brandTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontWeight: "bold",
+    color: "#0F2C59",
   },
   avatarPlaceholder: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
   },
   titleSection: {
     marginBottom: 16,
   },
   mainHeading: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontWeight: "bold",
+    color: "#0F2C59",
     marginBottom: 4,
   },
   subHeading: {
     fontSize: 13,
-    color: '#64748B',
+    color: "#64748B",
     lineHeight: 18,
   },
   settingsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 16,
     marginBottom: 20,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 8,
   },
   switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   switchLabelBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
     marginRight: 10,
   },
@@ -227,120 +237,120 @@ const styles = StyleSheet.create({
   },
   switchTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1E293B',
+    fontWeight: "bold",
+    color: "#1E293B",
   },
   switchSub: {
     fontSize: 11,
-    color: '#64748B',
+    color: "#64748B",
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#F1F5F9",
     marginVertical: 12,
   },
   alertCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 16,
     marginBottom: 14,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#CBD5E1',
+    borderLeftColor: "#CBD5E1",
   },
   urgentBorder: {
-    borderLeftColor: '#EF4444',
+    borderLeftColor: "#EF4444",
   },
   confirmBorder: {
-    borderLeftColor: '#3B82F6',
+    borderLeftColor: "#3B82F6",
   },
   onTimeBorder: {
-    borderLeftColor: '#10B981',
+    borderLeftColor: "#10B981",
   },
   alertHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   urgentBadge: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: "#FEE2E2",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
   urgentBadgeText: {
-    color: '#991B1B',
+    color: "#991B1B",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   confirmBadge: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: "#DBEAFE",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
   confirmBadgeText: {
-    color: '#1E40AF',
+    color: "#1E40AF",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   updateBadge: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: "#F1F5F9",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
   updateBadgeText: {
-    color: '#475569',
+    color: "#475569",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   onTimeBadge: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: "#DCFCE7",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
   onTimeBadgeText: {
-    color: '#15803D',
+    color: "#15803D",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   timeAgo: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: "#94A3B8",
   },
   alertTitle: {
     fontSize: 15,
-    fontWeight: 'bold',
-    color: '#1E293B',
+    fontWeight: "bold",
+    color: "#1E293B",
     marginBottom: 4,
   },
   alertDesc: {
     fontSize: 12,
-    color: '#64748B',
+    color: "#64748B",
     lineHeight: 18,
     marginBottom: 12,
   },
   actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   primaryActionBtn: {
-    backgroundColor: '#0F2C59',
+    backgroundColor: "#0F2C59",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   primaryActionText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
     fontSize: 12,
   },
   secondaryActionBtn: {
@@ -348,8 +358,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   secondaryActionText: {
-    color: '#64748B',
-    fontWeight: '600',
+    color: "#64748B",
+    fontWeight: "600",
     fontSize: 12,
   },
 });

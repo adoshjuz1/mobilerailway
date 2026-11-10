@@ -1,4 +1,4 @@
-const API_URL = 'http://172.20.10.6:8000';
+const API_URL = "http://172.20.10.6:8000";
 
 // 1. Поиск поездов
 export async function searchTrains(fromCity, toCity, date) {
@@ -11,7 +11,7 @@ export async function searchTrains(fromCity, toCity, date) {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Ошибка при поиске поездов:', error);
+    console.error("Ошибка при поиске поездов:", error);
     return [];
   }
 }
@@ -20,15 +20,15 @@ export async function searchTrains(fromCity, toCity, date) {
 export async function createBooking(bookingData) {
   try {
     const response = await fetch(`${API_URL}/api/bookings`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(bookingData),
     });
     return await response.json();
   } catch (error) {
-    console.error('Ошибка при бронировании:', error);
+    console.error("Ошибка при бронировании:", error);
     throw error;
   }
 }
