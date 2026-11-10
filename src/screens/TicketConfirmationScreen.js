@@ -59,7 +59,7 @@ export default function TicketConfirmationScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Header title="Билет расталды" centered onBack={() => navigation.navigate('Main')} onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })} />
 
-{/* зеблютуздевайсконнектенсаксесфули */}
+{/* зеблютуздевайсконнектедсаксесфули */}
         <View style={styles.successContainer}>
           <View style={styles.successIconBox}>
             <Ionicons name="checkmark-circle-outline" size={40} color="#00513A" />
@@ -90,10 +90,6 @@ export default function TicketConfirmationScreen({ route, navigation }) {
               <Text style={styles.timeText}>{train.departure_time}</Text>
             </View>
 
-            <View style={styles.routeDots}>
-              <View style={styles.dotFilled} />
-              <View style={styles.dotRing} />
-            </View>
 
             <View style={[styles.stationBlock, styles.stationBlockRight]}>
               <Text style={styles.stationCity}>{train.to_city}</Text>
@@ -119,9 +115,6 @@ export default function TicketConfirmationScreen({ route, navigation }) {
               <Text style={[styles.detailValue, styles.textRight]}>{getSeatText(seats)}</Text>
             </View>
           </View>
-
-          <View style={styles.dishedDivider} />
-
 {/* куаркодзаглушка */}
           <View style={styles.qrFrame}>
             <View style={styles.qrBox}>
@@ -292,26 +285,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: colors.onSurface,
-  },
-  routeDots: {
-    width: 28,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  dotFilled: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: colors.primary,
-  },
-  dotRing: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: colors.card,
   },
   divider: {
     height: 1,
