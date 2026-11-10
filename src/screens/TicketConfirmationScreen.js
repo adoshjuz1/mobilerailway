@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,7 +7,32 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  Share,
+  Alert,
 } from 'react-native';
+import { IonIcons } from '@expo/vector-icons';
+import Header from '../components/Header';
+import { colors, fonts} from '../theme';
+
+const MONTHS = ['Қаң', 'Ақп', 'Нау', 'Сәу', 'Мам', 'Мау', 'Шіл', 'Там', 'Қыр', 'Қаз', 'Қар', 'Жел'];
+
+const DEPARTURE_PLATFORM = "Платформа 9¾";
+const ARRIVAL_PLATFORM = "12-ші платформа"
+
+const formatDate = (iso) => {
+  if (!iso) return '';
+  const [year, month, day] = iso.split('-');
+  return `${day} ${MONTHS[Number(month) -1]}, ${year}`;
+};
+
+const generateTicketId = () => {
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const digits = Math.floor(1000 + Math.random() * 9000);
+  const suffix = Array.from({ length: 3 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+  return `ALT-${digits}-${suffix}`;
+};
+
+
 
 export default function TicketConfirmationScreen({ navigation }) {
   return (
