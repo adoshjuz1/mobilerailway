@@ -7,9 +7,37 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  Share,
+  Alert,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import Header from "../components/Header";
+import { colors, fonts } from "../theme";
 
-export default function MyTripsScreen({ navigation }) {
+const MONTHS = [
+  "Қаң",
+  "Ақп",
+  "Нау",
+  "Сәу",
+  "Мам",
+  "Мау",
+  "Шіл",
+  "Там",
+  "Қыр",
+  "Қаз",
+  "Қар",
+  "Жел",
+];
+
+const formatDate = (iso) => {
+  if (!iso) return "";
+  const [year, month, day] = iso.split("-");
+  return `${day} ${MONTHS[Number(month) - 1]}, ${year}`;
+};
+
+
+export default function MyTripsScreen({ route, navigation }) {
+  const { train = {}, date, seats = [], carriage } = route.params || {};
   const [activeTab, setActiveTab] = useState("upcoming"); // 'upcoming' или 'past'
 
   return (
