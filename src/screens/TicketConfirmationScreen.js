@@ -10,7 +10,7 @@ import {
   Share,
   Alert,
 } from 'react-native';
-import { IonIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import { colors, fonts} from '../theme';
 
@@ -57,12 +57,12 @@ export default function TicketConfirmationScreen({ route, navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Header title="Билет расталды" onBack={() => navigation.navigate('Main')} onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })} />
+        <Header title="Билет расталды" centered onBack={() => navigation.navigate('Main')} onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })} />
 
-        {/* Успешный статус */}
+{/* зеблютуздевайсконнектенсаксесфули */}
         <View style={styles.successContainer}>
           <View style={styles.successIconBox}>
-            <IonIcons name="checkmark-circle-outline" size={40} color="#00513A" />
+            <Ionicons name="checkmark-circle-outline" size={40} color="#00513A" />
           </View>
           <Text style={styles.successTitle}>Брондау расталды!</Text>
           <Text style={styles.successSub}>
@@ -70,7 +70,7 @@ export default function TicketConfirmationScreen({ route, navigation }) {
           </Text>
         </View>
 
-        {/* Карточка электронного билета */}
+{/* электронныйбилет */}
         <View style={styles.ticketCard}>
           <View style={styles.ticketTopRow}>
             <View>
@@ -82,7 +82,7 @@ export default function TicketConfirmationScreen({ route, navigation }) {
             </View>
           </View>
 
-          {/* Маршрут билета */}
+{/* отправкаприбытиеотидо */}
           <View style={styles.routeSection}>
             <View style={styles.stationBlock}>
               <Text style={styles.stationCity}>{train.from_city}</Text>
@@ -104,7 +104,7 @@ export default function TicketConfirmationScreen({ route, navigation }) {
 
           <View style={styles.divider} />
 
-          {/* Детали даты и места */}
+{/* Деталидатавагонместо */}
           <View style={styles.detailsRow}>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Күні</Text>
@@ -122,10 +122,10 @@ export default function TicketConfirmationScreen({ route, navigation }) {
 
           <View style={styles.dishedDivider} />
 
-          {/* QR-код заглушка */}
+{/* куаркодзаглушка */}
           <View style={styles.qrFrame}>
             <View style={styles.qrBox}>
-              <IonIcons name="qr-code" size={130} color="#FFFFFF" />
+              <Ionicons name="qr-code" size={130} color="#FFFFFF" />
             </View>
           </View>
           <Text style={styles.qrInstruction}>
@@ -133,27 +133,51 @@ export default function TicketConfirmationScreen({ route, navigation }) {
           </Text>
         </View>
 
-        {/* Кнопки действий */}
+{/* кнопкадействияподелитьсяикошелек */}
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionBtnBlue}>
-            <Text style={styles.actionBtnIcon}>📱</Text>
-            <Text style={styles.actionBtnTextBlue}>Әмиянға қосу</Text>
+          <TouchableOpacity style={styles.actionBtn} onPress={handleWallet}>
+            <View style={[styles.actionIcon, styles.actionIconPrimary]}>
+              <Ionicons name="wallet" size={24} color="#FFFFFF" />
+            </View>
+            <Text style={styles.actionText}>Әмиянға қосу</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionBtnBlue}>
-            <Text style={styles.actionBtnIcon}>🔗</Text>
-            <Text style={styles.actionBtnTextBlue}>Бөлісу</Text>
+          <TouchableOpacity style={styles.actionBtn} onPress={handleShare}>
+            <View style={[styles.actionIcon, styles.actionIconLight]}>
+              <Ionicons name="share-social" size={22} color={colors.primary} />
+            </View>
+              <Text style={styles.actionText}>Билетпен бөлісу</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Кнопка возврата на главную */}
-        <TouchableOpacity 
-          style={styles.homeButton}
-          onPress={() => navigation.navigate('Main')}
-        >
-          <Text style={styles.homeButtonText}>Басты бетке оралу</Text>
+{/* поездинфоресторанинфоподдержка */}
+        <TouchableOpacity style={styles.infoRow}>
+          <View style={styles.infoIcon}>
+            <Ionicons name="train" size={22} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.infoTitle}>Пойыз туралы ақпарат</Text>
+            <Text style={styles.infoSub}>{train.name} №{train.number}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.infoRow}>
+          <View style={styles.infoIcon}>
+            <Ionicons name="restaurant" size={22} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1}}>
+            <Text style={styles.infoTitle}>Бортта қызмет көрсету</Text>
+            <Text style={styles.infoSub}>Вагон-ресторан қолжетімді</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+        </TouchableOpacity>
+
+        <View style={styles.supportBlock}>
+          <Text style={styles.supportText}>Сапарыңызға көмек керек пе?</Text>
+          <TouchableOpacity>
+            <Text style={styles.supportLink}>Қолдау қызметіне хабарласу</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -162,250 +186,267 @@ export default function TicketConfirmationScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F9',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
   },
-  topHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+  textRight: {
+    textAlign: 'right',
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 22,
-    color: '#0F2C59',
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0F2C59',
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+
+  // Статус
   successContainer: {
     alignItems: 'center',
     marginBottom: 20,
   },
   successIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#DCFCE7',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.mint,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  successCheck: {
-    fontSize: 28,
-    color: '#15803D',
-    fontWeight: 'bold',
+    marginBottom: 14,
   },
   successTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#0F2C59',
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#006C49',
+    marginBottom: 6,
   },
   successSub: {
-    fontSize: 13,
-    color: '#64748B',
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
+
+  // Билет
   ticketCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 20,
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 20,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
   },
   ticketTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   ticketIdLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.5,
   },
   ticketIdValue: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontFamily: fonts.mono,
+    color: colors.primary,
   },
   statusBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+    backgroundColor: colors.mint,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
   statusBadgeText: {
-    color: '#15803D',
-    fontSize: 11,
-    fontWeight: 'bold',
+    color: '#006C49',
+    fontSize: 13,
+    fontWeight: '700',
   },
   routeSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   stationBlock: {
     flex: 1,
   },
+  stationBlockRight: {
+    alignItems: 'flex-end',
+  },
   stationCity: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#1E293B',
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.onSurface,
     marginBottom: 2,
   },
   platformText: {
-    fontSize: 11,
-    color: '#64748B',
-    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+    marginBottom: 6,
   },
   timeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0F2C59',
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.onSurface,
   },
-  stationCenterLine: {
+  routeDots: {
+    width: 28,
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
-  dotBlue: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#0F2C59',
+  dotFilled: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.primary,
   },
-  trackLine: {
-    height: 30,
-    width: 2,
-    backgroundColor: '#CBD5E1',
-    marginVertical: 2,
-  },
-  dotOutline: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  dotRing: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     borderWidth: 2,
-    borderColor: '#0F2C59',
-    backgroundColor: '#FFFFFF',
+    borderColor: colors.primary,
+    backgroundColor: colors.card,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    marginBottom: 14,
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  detailItem: {
+    flex: 1,
+  },
+  detailItemRight: {
+    alignItems: 'flex-end',
+  },
+  detailLabel: {
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.onSurface,
   },
   dashedDivider: {
     height: 1,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#D5DCF0',
     borderStyle: 'dashed',
-    marginBottom: 16,
+    borderRadius: 1,
+    marginVertical: 18,
   },
-  ticketDetailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  detailLabel: {
-    fontSize: 11,
-    color: '#64748B',
-    marginBottom: 2,
-  },
-  detailValue: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#1E293B',
-  },
-  qrContainer: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  qrFrame: {
+    alignSelf: 'center',
+    padding: 8,
+    borderRadius: 18,
+    borderWidth: 3,
+    borderColor: colors.mint,
+    marginBottom: 14,
   },
   qrBox: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-  },
-  qrEmoji: {
-    fontSize: 36,
-    marginBottom: 4,
-  },
-  qrCodeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#334155',
-    letterSpacing: 2,
-  },
-  qrInstruction: {
-    fontSize: 11,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  actionBtnBlue: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: '#EFF6FF',
-    borderRadius: 14,
-    paddingVertical: 14,
+    width: 190,
+    height: 190,
+    borderRadius: 8,
+    backgroundColor: '#0F3550',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
   },
-  actionBtnIcon: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-  actionBtnTextBlue: {
-    color: '#1D4ED8',
-    fontWeight: 'bold',
+  qrInstruction: {
     fontSize: 13,
+    lineHeight: 18,
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
   },
-  homeButton: {
-    backgroundColor: '#0F2C59',
-    borderRadius: 14,
-    paddingVertical: 16,
+
+  // Кнопки действий
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 14,
+    marginBottom: 20,
+  },
+  actionBtn: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#E6EEFF',
+    borderRadius: 16,
+    paddingVertical: 18,
+  },
+  actionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  homeButtonText: {
-    color: '#FFFFFF',
+  actionIconPrimary: {
+    backgroundColor: colors.primary,
+  },
+  actionIconLight: {
+    backgroundColor: '#D5DFF7',
+  },
+  actionText: {
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: colors.primary,
+  },
+
+  // Информационные строки
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+  },
+  infoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#E6EEFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.onSurface,
+  },
+  infoSub: {
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+  },
+
+  // Поддержка
+  supportBlock: {
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 6,
+  },
+  supportText: {
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+  },
+  supportLink: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary,
+    textDecorationLine: 'underline',
   },
 });
