@@ -42,9 +42,79 @@ const formatDate = (iso) => {
 
 
 export default function MyTripsScreen({ navigation }) {
-  const { train = {}, date, seats = [], carriage } = route.params || {};
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState("upcoming"); // 'upcoming' или 'past'
 
+  const trips = activeTab === 'upcoming' ? UPCOMING_TRIPS : PAST_TRIPS;
+
+  const openTicket = (trip) => {
+    navigation.navigate('TicketConfirmation', {
+      train: trip.train,
+      date: trip.date,
+      seats: trip.seats,
+      carriage: trip.carriage,
+      ticketId: trip.ticketId,
+    });
+  };
+
+  const renderFullCard = (trip) => (
+    <View key={trip.id} style={styles.tripCard}>
+      <View style={styles.tripHeaderRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.confirmationText}>БРОНДАУ #{trip.id}</Text>
+          <View style={styles.statusBadge}>
+            <Ionicons name="checkmark-circle" size={14} color="#006C49" />
+            <Text style={styles.statusBadgeText}>Уақытында</Text>
+          </View>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={styles.tripDate}>{formatShortDate(trip.date)}</Text>
+          <Text style={styles.classText}>{trip.className} класс</Text>
+        </View>
+      </View>
+
+      <View style={styles.timelineRow}>
+        <View style={styles.stationBlock}>
+          <Text style={styles.timeBig}>{trip.train.departure_time}</Text>
+          <Text style={styles.stationName}>{trip.train.from_city}</Text>
+        </View>
+
+        <View style={styles.centerTimeline}>
+          <View style={styles.lineRow}>
+            <View style={styles.dotRing} />
+            <Ionicons name="train" size={20} color={colors.primary} style={{ marginHorizontal: 6 }} />
+            <View style={styles.dotFilled} />
+          </View>
+          <Text style={styles.durationLabel}>{trip.train.duration_text}</Text>
+        </View>
+
+        <View style={[styles.stationBlock, { alignItems: 'flex-end' }]}>
+          <Text style={styles.timeBig}>{trip.train.arrival_time}</Text>
+          <Text style={[styles.stationName, { textAlign: 'right' }]}>{trip.train.to_city}</Text>
+        </View>
+      </View>
+
+      <View style={styles.dashedDivider} />
+
+      <View style={styles.tripFooter}>
+        <View style={styles.seatInfo}>
+          <View style={styles.seatIconBox}>
+            <Ionicons name="grid-outline" size={20} color={colors.primary} />
+          </View>
+          <View>
+            <Text style={styles.carriageLabel}>Вагон {trip.carriage}</Text>
+            <Text style={styles.seatLabel}>Орын {trip.seats.join(', ')}</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.viewTicketBtn} onPress={() => openTicket(trip)}>
+          <Ionicons name="qr-code-outline" size={18} color="#FFFFFF" />
+          <Text style={styles.viewTicketText}>Билетті көру</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
