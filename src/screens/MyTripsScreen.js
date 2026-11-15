@@ -14,20 +14,6 @@ import { Ionicons } from "@expo/vector-icons";
 import Header from "../components/Header";
 import { colors, fonts } from "../theme";
 
-const MONTHS = [
-  "Қаң",
-  "Ақп",
-  "Нау",
-  "Сәу",
-  "Мам",
-  "Мау",
-  "Шіл",
-  "Там",
-  "Қыр",
-  "Қаз",
-  "Қар",
-  "Жел",
-];
 
 const formatDate = (iso) => {
   if (!iso) return "";
