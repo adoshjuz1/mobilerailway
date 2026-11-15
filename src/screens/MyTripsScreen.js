@@ -7,12 +7,12 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  Share,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from "../components/Header";
 import { colors, fonts } from "../theme";
+import { UPCOMING_TRIPS, PAST_TRIPS } from '../services/mockTrips';
 
 const MONTHS = [
   "Қаң",
@@ -29,14 +29,19 @@ const MONTHS = [
   "Жел",
 ];
 
+const TABS = [
+  { id: 'upcoming', label: 'Алдағы'},
+  { id: 'past', label: 'Өткен'},
+];
+
 const formatDate = (iso) => {
   if (!iso) return "";
-  const [year, month, day] = iso.split("-");
-  return `${day} ${MONTHS[Number(month) - 1]}, ${year}`;
+  const [, month, day] = iso.split("-");
+  return `${day} ${MONTHS[Number(month) - 1]}`;
 };
 
 
-export default function MyTripsScreen({ route, navigation }) {
+export default function MyTripsScreen({ navigation }) {
   const { train = {}, date, seats = [], carriage } = route.params || {};
   const [activeTab, setActiveTab] = useState("upcoming"); // 'upcoming' или 'past'
 
