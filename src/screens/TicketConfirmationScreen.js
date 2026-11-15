@@ -57,8 +57,8 @@ const getSeatText = (seats) => {
 };
 
 export default function TicketConfirmationScreen({ route, navigation }) {
-  const { train = {}, date, seats = [], carriage } = route.params || {};
-  const [ticketId] = useState(generateTicketId);
+  const { train = {}, date, seats = [], carriage, ticketId: savedTicketId } = route.params || {};
+  const [ticketId] = useState(() => savedTicketId || generateTicketId());
 
   const handleShare = () => {
     Share.share({
