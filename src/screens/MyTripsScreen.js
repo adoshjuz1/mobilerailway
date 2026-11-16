@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,43 +7,29 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Header from "../components/Header";
-import { colors, fonts } from "../theme";
+import Header from '../components/Header';
+import { colors } from '../theme';
 import { UPCOMING_TRIPS, PAST_TRIPS } from '../services/mockTrips';
 
-const MONTHS = [
-  "Қаң",
-  "Ақп",
-  "Нау",
-  "Сәу",
-  "Мам",
-  "Мау",
-  "Шіл",
-  "Там",
-  "Қыр",
-  "Қаз",
-  "Қар",
-  "Жел",
-];
+const MONTHS = ['Қаң', 'Ақп', 'Нау', 'Сәу', 'Мам', 'Мау', 'Шіл', 'Там', 'Қыр', 'Қаз', 'Қар', 'Жел'];
 
 const TABS = [
-  { id: 'upcoming', label: 'Алдағы'},
-  { id: 'past', label: 'Өткен'},
+  { id: 'upcoming', label: 'Алдағы' },
+  { id: 'past', label: 'Өткен' },
 ];
 
-const formatDate = (iso) => {
-  if (!iso) return "";
-  const [, month, day] = iso.split("-");
+// 2026-11-24 -> 24 Қар
+const formatShortDate = (iso) => {
+  const [, month, day] = iso.split('-');
   return `${day} ${MONTHS[Number(month) - 1]}`;
 };
 
-
 export default function MyTripsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState("upcoming"); // 'upcoming' или 'past'
+  const [activeTab, setActiveTab] = useState('upcoming');
 
   const trips = activeTab === 'upcoming' ? UPCOMING_TRIPS : PAST_TRIPS;
 
@@ -57,6 +43,7 @@ export default function MyTripsScreen({ navigation }) {
     });
   };
 
+  // Полная карточка ближайшей поездки
   const renderFullCard = (trip) => (
     <View key={trip.id} style={styles.tripCard}>
       <View style={styles.tripHeaderRow}>
@@ -114,152 +101,83 @@ export default function MyTripsScreen({ navigation }) {
       </View>
     </View>
   );
-  
+
+  // Компактная карточка
+  const renderCompactCard = (trip) => (
+    <TouchableOpacity
+      key={trip.id}
+      style={styles.compactCard}
+      activeOpacity={0.8}
+      onPress={() => openTicket(trip)}
+    >
+      <View style={styles.compactTopRow}>
+        <Text style={styles.compactId}>БРОНДАУ #{trip.id}</Text>
+        <View style={styles.dateBadge}>
+          <Text style={styles.dateBadgeText}>{formatShortDate(trip.date)}</Text>
+        </View>
+      </View>
+
+      <View style={styles.compactRouteRow}>
+        <View style={styles.compactIconBox}>
+          <Ionicons name="train" size={22} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.compactRoute}>
+            {trip.train.from_city} ➔ {trip.train.to_city}
+          </Text>
+          <Text style={styles.compactSub}>
+            Жөнелу: {trip.train.departure_time} • {trip.train.name}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Header
-          onAvatarPress={() =>
-            navigation.navigate("Main", { screen: "ProfileTab" })
-          }
-        />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <Header onAvatarPress={() => navigation.navigate('ProfileTab')} />
 
-        {/* Заголовок страницы */}
-        <View style={styles.titleSection}>
-          <Text style={styles.mainHeading}>Менің сапарларым</Text>
-          <Text style={styles.subHeading}>
-            Белсенді сапарларыңыз бен саяхат тарихын басқарыңыз.
-          </Text>
-        </View>
+        <Text style={styles.mainHeading}>Менің сапарларым</Text>
+        <Text style={styles.subHeading}>Белсенді маршруттарыңыз бен сапар тарихын басқарыңыз.</Text>
 
-        {/* Переключатель вкладок Upcoming / Past */}
+        {/* Переключатель вкладок */}
         <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === "upcoming" && styles.activeTab,
-            ]}
-            onPress={() => setActiveTab("upcoming")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "upcoming" && styles.activeTabText,
-              ]}
-            >
-              Алдағы
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === "past" && styles.activeTab]}
-            onPress={() => setActiveTab("past")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "past" && styles.activeTabText,
-              ]}
-            >
-              Өткен
-            </Text>
-          </TouchableOpacity>
+          {TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <TouchableOpacity
+                key={tab.id}
+                style={[styles.tabButton, active && styles.tabButtonActive]}
+                onPress={() => setActiveTab(tab.id)}
+              >
+                <Text style={[styles.tabText, active && styles.tabTextActive]}>{tab.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        {/* Карточка активной поездки */}
-        <View style={styles.tripCard}>
-          <View style={styles.tripHeaderRow}>
-            <View>
-              <Text style={styles.confirmationText}>БРОНДАУ #RC8821</Text>
-            </View>
-            <View style={styles.statusBadgeGreen}>
-              <Text style={styles.statusBadgeGreenText}>✓ Уақытында</Text>
-            </View>
+        {trips.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Ionicons name="ticket-outline" size={40} color="#94A3B8" />
+            <Text style={styles.emptyText}>Сапарлар әзірше жоқ</Text>
           </View>
-
-          <View style={styles.tripDateRow}>
-            <Text style={styles.tripDateMain}>24 Қараша</Text>
-            <Text style={styles.classText}>Стандарт Класс</Text>
-          </View>
-
-          {/* Временная шкала маршрута */}
-          <View style={styles.timelineContainer}>
-            <View>
-              <Text style={styles.timeBig}>08:45</Text>
-              <Text style={styles.stationName}>London Kings Cross</Text>
-            </View>
-
-            <View style={styles.centerTimeline}>
-              <Text style={styles.durationLabel}>2 сағ 15 мин</Text>
-              <View style={styles.lineRow}>
-                <View style={styles.dotStart} />
-                <View style={styles.lineTrack} />
-                <Text style={{ fontSize: 12 }}>🚆</Text>
-                <View style={styles.lineTrack} />
-                <View style={styles.dotEnd} />
-              </View>
-            </View>
-
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.timeBig}>11:00</Text>
-              <Text style={styles.stationName}>Edinburgh Waverley</Text>
-            </View>
-          </View>
-
-          <View style={styles.dashedDivider} />
-
-          {/* Вагон и кнопка просмотра билета */}
-          <View style={styles.tripFooter}>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={{ fontSize: 20, marginRight: 8 }}>💺</Text>
-              <View>
-                <Text style={styles.carriageLabel}>Вагон C</Text>
-                <Text style={styles.seatLabel}>Орын 42A (Терезе)</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.viewTicketBtn}
-              onPress={() => navigation.navigate("TicketConfirmation")}
-            >
-              <Text style={styles.viewTicketText}>🎟️ Билетті көру</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Карточка второй поездки */}
-        <View style={styles.tripCardPassive}>
-          <View style={styles.passiveTopRow}>
-            <Text style={styles.passiveId}>БРОНДАУ #RC9004</Text>
-            <View style={styles.dateBadgeGray}>
-              <Text style={styles.dateBadgeGrayText}>02 Желтоқсан</Text>
-            </View>
-          </View>
-
-          <View style={styles.passiveRouteRow}>
-            <View style={styles.passiveIconBox}>
-              <Text style={{ fontSize: 16 }}>🚆</Text>
-            </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.passiveRouteTitle}>
-                Manchester Piccadilly ➔ London Euston
-              </Text>
-              <Text style={styles.passiveRouteSub}>
-                Кету: 14:20 • Avanti West Coast
-              </Text>
-            </View>
-            <Text style={styles.arrowGray}>›</Text>
-          </View>
-        </View>
+        ) : (
+          trips.map((trip, index) =>
+            // Ближайшая поездка показывается полной карточкой, остальные компактно
+            activeTab === 'upcoming' && index === 0 ? renderFullCard(trip) : renderCompactCard(trip)
+          )
+        )}
       </ScrollView>
 
-      {/* Плавающая кнопка добавления */}
-      <TouchableOpacity style={styles.fabButton}>
-        <Text style={styles.fabIcon}>＋</Text>
+      {/* Кнопка новой поездки */}
+      <TouchableOpacity
+        style={[styles.fabButton, { bottom: 68 + insets.bottom + 16 }]}
+        onPress={() => navigation.navigate('SearchTab')}
+      >
+        <Ionicons name="add" size={32} color="#FFFFFF" />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -268,283 +186,284 @@ export default function MyTripsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F4F6F9",
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
-  },
-  topHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  hamburgerIcon: {
-    fontSize: 22,
-    color: "#0F2C59",
-  },
-  brandTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#0F2C59",
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#E2E8F0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  titleSection: {
-    marginBottom: 16,
+    paddingBottom: 170,
   },
   mainHeading: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#0F2C59",
-    marginBottom: 4,
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.onSurface,
+    marginBottom: 6,
   },
   subHeading: {
-    fontSize: 13,
-    color: "#64748B",
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.onSurfaceVariant,
+    marginBottom: 20,
   },
+
+  // Вкладки
   tabContainer: {
-    flexDirection: "row",
-    backgroundColor: "#E2E8F0",
-    borderRadius: 14,
+    flexDirection: 'row',
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
     padding: 4,
     marginBottom: 20,
   },
   tabButton: {
     flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
   },
-  activeTab: {
-    backgroundColor: "#FFFFFF",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+  tabButtonActive: {
+    backgroundColor: '#D8E4FF',
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#64748B",
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.onSurface,
   },
-  activeTabText: {
-    color: "#0F2C59",
-    fontWeight: "bold",
+  tabTextActive: {
+    fontWeight: '700',
+    color: colors.primary,
   },
+
+  // Полная карточка
   tripCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.card,
     borderRadius: 20,
     padding: 18,
     marginBottom: 16,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
   },
   tripHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  confirmationText: {
-    fontSize: 10,
-    fontWeight: "bold",
-    color: "#64748B",
-    letterSpacing: 0.5,
-  },
-  statusBadgeGreen: {
-    backgroundColor: "#DCFCE7",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  statusBadgeGreenText: {
-    color: "#15803D",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  tripDateRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 14,
   },
-  tripDateMain: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#0F2C59",
+  confirmationText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    backgroundColor: colors.mint,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusBadgeText: {
+    color: '#006C49',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tripDate: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.primary,
   },
   classText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#475569",
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
   },
-  timelineContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  stationBlock: {
+    width: 100,
   },
   timeBig: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1E293B",
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.onSurface,
   },
   stationName: {
-    fontSize: 11,
-    color: "#64748B",
-    maxWidth: 90,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.onSurface,
   },
   centerTimeline: {
     flex: 1,
-    alignItems: "center",
-    paddingHorizontal: 8,
-  },
-  durationLabel: {
-    fontSize: 10,
-    color: "#64748B",
-    marginBottom: 4,
+    alignItems: 'center',
   },
   lineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  lineTrack: {
-    flex: 1,
-    height: 2,
-    backgroundColor: "#CBD5E1",
+  dotRing: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.card,
   },
-  dotStart: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#0F2C59",
+  dotFilled: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.primary,
   },
-  dotEnd: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#0F2C59",
+  durationLabel: {
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    marginTop: 4,
+    textAlign: 'center',
   },
   dashedDivider: {
     height: 1,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
-    borderStyle: "dashed",
-    marginBottom: 14,
+    borderColor: '#D5DCF0',
+    borderStyle: 'dashed',
+    borderRadius: 1,
+    marginVertical: 16,
   },
   tripFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  seatInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  seatIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#E6EEFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   carriageLabel: {
-    fontSize: 11,
-    color: "#64748B",
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
   },
   seatLabel: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: "#0F2C59",
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.onSurface,
   },
   viewTicketBtn: {
-    backgroundColor: "#0F2C59",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 12,
   },
   viewTicketText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
   },
-  tripCardPassive: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
+
+  // Компактная карточка
+  compactCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  passiveTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
+  compactTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  passiveId: {
-    fontSize: 10,
-    fontWeight: "bold",
-    color: "#64748B",
+  compactId: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.5,
   },
-  dateBadgeGray: {
-    backgroundColor: "#F1F5F9",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+  dateBadge: {
+    backgroundColor: '#E6EEFF',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  dateBadgeGrayText: {
-    fontSize: 10,
-    fontWeight: "bold",
-    color: "#475569",
+  dateBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.onSurfaceVariant,
   },
-  passiveRouteRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  compactRouteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  passiveIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "#F1F5F9",
-    justifyContent: "center",
-    alignItems: "center",
+  compactIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#E6EEFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  passiveRouteTitle: {
+  compactRoute: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.onSurface,
+  },
+  compactSub: {
     fontSize: 13,
-    fontWeight: "bold",
-    color: "#1E293B",
-    marginBottom: 2,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
   },
-  passiveRouteSub: {
-    fontSize: 11,
-    color: "#64748B",
+
+  // Пустое состояние
+  emptyBox: {
+    alignItems: 'center',
+    paddingVertical: 50,
+    gap: 10,
   },
-  arrowGray: {
-    fontSize: 18,
-    color: "#94A3B8",
+  emptyText: {
+    fontSize: 15,
+    color: colors.onSurfaceVariant,
   },
+
+  // Кнопка новой поездки
   fabButton: {
-    position: "absolute",
-    bottom: 90,
+    position: 'absolute',
     right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#00D18F",
-    justifyContent: "center",
-    alignItems: "center",
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
     elevation: 6,
-    shadowColor: "#000",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-  },
-  fabIcon: {
-    fontSize: 28,
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    marginTop: -2,
   },
 });
