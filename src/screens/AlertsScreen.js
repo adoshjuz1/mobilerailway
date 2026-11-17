@@ -232,199 +232,139 @@ export default function AlertsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F4F6F9",
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
-  },
-  topHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  hamburgerIcon: {
-    fontSize: 22,
-    color: "#0F2C59",
-  },
-  brandTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#0F2C59",
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#E2E8F0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  titleSection: {
-    marginBottom: 16,
+    paddingBottom: 130,
   },
   mainHeading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#0F2C59",
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.onSurface,
+    marginBottom: 6,
   },
   subHeading: {
-    fontSize: 13,
-    color: "#64748B",
-    lineHeight: 18,
-  },
-  settingsCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 16,
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.onSurfaceVariant,
     marginBottom: 20,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
   },
-  switchRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+
+  // Переключатели
+  toggleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 14,
   },
-  switchLabelBox: {
-    flexDirection: "row",
-    alignItems: "center",
+  toggleInfo: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     marginRight: 10,
   },
-  switchIcon: {
-    fontSize: 20,
-    marginRight: 12,
+  toggleTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.onSurface,
   },
-  switchTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#1E293B",
+  toggleSub: {
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
   },
-  switchSub: {
-    fontSize: 11,
-    color: "#64748B",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#F1F5F9",
-    marginVertical: 12,
+
+  // Уведомления
+  alertsList: {
+    marginTop: 10,
   },
   alertCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 14,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: "#CBD5E1",
-  },
-  urgentBorder: {
-    borderLeftColor: "#EF4444",
-  },
-  confirmBorder: {
-    borderLeftColor: "#3B82F6",
-  },
-  onTimeBorder: {
-    borderLeftColor: "#10B981",
+    marginBottom: 16,
   },
   alertHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  urgentBadge: {
-    backgroundColor: "#FEE2E2",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  urgentBadgeText: {
-    color: "#991B1B",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  confirmBadge: {
-    backgroundColor: "#DBEAFE",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  confirmBadgeText: {
-    color: "#1E40AF",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  updateBadge: {
-    backgroundColor: "#F1F5F9",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  updateBadgeText: {
-    color: "#475569",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  onTimeBadge: {
-    backgroundColor: "#DCFCE7",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  onTimeBadgeText: {
-    color: "#15803D",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  timeAgo: {
-    fontSize: 11,
-    color: "#94A3B8",
-  },
-  alertTitle: {
-    fontSize: 15,
-    fontWeight: "bold",
-    color: "#1E293B",
-    marginBottom: 4,
-  },
-  alertDesc: {
-    fontSize: 12,
-    color: "#64748B",
-    lineHeight: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  timeAgo: {
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+  },
+  alertTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.onSurface,
+    marginBottom: 6,
+  },
+  alertDesc: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.onSurfaceVariant,
+  },
+  alertHighlight: {
+    fontWeight: '600',
+    color: colors.onSurface,
+  },
   actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+    marginTop: 14,
   },
-  primaryActionBtn: {
-    backgroundColor: "#0F2C59",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+  primaryBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderRadius: 10,
-    alignSelf: "flex-start",
   },
-  primaryActionText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 12,
+  primaryBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
-  secondaryActionBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+  secondaryBtn: {
+    paddingVertical: 14,
   },
-  secondaryActionText: {
-    color: "#64748B",
-    fontWeight: "600",
-    fontSize: 12,
+  secondaryBtnText: {
+    color: colors.primary,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+
+  // Пустое состояние
+  emptyBox: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    gap: 10,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: colors.onSurfaceVariant,
   },
 });
