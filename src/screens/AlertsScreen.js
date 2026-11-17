@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,7 +8,42 @@ import {
   SafeAreaView,
   StatusBar,
   Switch,
-} from "react-native";
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Header from '../components/Header';
+import { colors } from '../theme';
+import { UPCOMING_TRIPS } from '../services/mockTrips';
+
+const ALERT_TYPES = {
+  urgent: {
+    badge: 'ШҰҒЫЛ КЕШІГУ',
+    icon: 'alert-circle-outline',
+    badgeBg: '#FFDAD6',
+    badgeColor: '#BA1A1A',
+    border: '#F97316',
+  },
+  booking: {
+    badge: 'БРОНДАУ РАСТАЛДЫ',
+    icon: 'information-circle-outline',
+    badgeBg: '#DCE5FA',
+    badgeColor: colors.primary,
+    border: colors.primary,
+  },
+  platform: {
+    badge: 'ПЛАТФОРМА ЖАҢАРТУЫ',
+    icon: 'settings-outline',
+    badgeBg: 'E6EEFF',
+    badgeColor: colors.onSurfaceVariant,
+    border: null,
+  },
+  ontime: {
+    badge: 'УАҚЫТЫНДА',
+    icon: 'checkmark-circle',
+    badgeBg: colors.mint,
+    badgeColor: '#006C49',
+    border: '#1E8E4E'
+  },
+};
 
 export default function AlertsScreen({ navigation }) {
   const [urgentDelays, setUrgentDelays] = useState(true);
