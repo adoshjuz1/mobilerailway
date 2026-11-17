@@ -116,150 +116,113 @@ export default function AlertsScreen({ navigation }) {
     );
   };
 
+  const renderActions = (alert) => {
+    if (!alert.actions) return null;
+    return (
+      <View style={styles.actionRow}>
+        {alert.actions.includes('route') && (
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => navigation.navigate('SearchTab')}
+          >
+            <Text style={styles.primaryBtnText}>Жаңа бағытты көру</Text>
+          </TouchableOpacity>
+        )}
+        {alert.actions.includes('ticket') && (
+          <TouchableOpacity style={styles.primaryBtn} onPress={openTicket}>
+            <Text style={styles.primaryBtnText}>Билетті көру</Text>
+          </TouchableOpacity>
+        )}
+        {alert.actions.includes('dismiss') && (
+          <TouchableOpacity
+            style={styles.secondaryBtn}
+            onPress={() => setDismissedIds([...dismissedIds, alert.id])}
+          >
+            <Text style={styles.secondaryBtnText}>Жабу</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Шапка */}
-        <View style={styles.topHeader}>
-          <Text style={styles.hamburgerIcon}>☰</Text>
-          <Text style={styles.brandTitle}>Railway Connect</Text>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={{ fontSize: 16 }}>👤</Text>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <Header onAvatarPress={() => navigation.navigate('ProfileTab')} />
+
+        <Text style={styles.mainHeading}>Ескертулер мен хабарламалар</Text>
+        <Text style={styles.subHeading}>
+          Сапар туралы өзекті ақпараттан және платформа өзгерістерінен хабардар болыңыз.
+        </Text>
+
+        {/* Переключатели */}
+        <View style={styles.toggleCard}>
+          <View style={styles.toggleInfo}>
+            <Ionicons name="warning" size={24} color="#F97316" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.toggleTitle}>Шұғыл кешігулер</Text>
+              <Text style={styles.toggleSub}>Қызмет үзілістері туралы жедел хабарламалар</Text>
+            </View>
           </View>
+          <Switch
+            value={urgentDelays}
+            onValueChange={setUrgentDelays}
+            trackColor={{ false: '#C3C6D6', true: colors.primary }}
+            thumbColor="#FFFFFF"
+          />
         </View>
 
-        {/* Заголовок */}
-        <View style={styles.titleSection}>
-          <Text style={styles.mainHeading}>Ескертулер мен хабарламалар</Text>
-          <Text style={styles.subHeading}>
-            Сапар туралы өзекті ақпараттан және платформа өзгерістерінен
-            хабардар болуыңыз.
-          </Text>
+        <View style={styles.toggleCard}>
+          <View style={styles.toggleInfo}>
+            <Ionicons name="ticket" size={24} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.toggleTitle}>Брондау растаулары</Text>
+              <Text style={styles.toggleSub}>Түбіртектер мен билет жаңартулары</Text>
+            </View>
+          </View>
+          <Switch
+            value={bookingConfirmations}
+            onValueChange={setBookingConfirmations}
+            trackColor={{ false: '#C3C6D6', true: colors.primary }}
+            thumbColor="#FFFFFF"
+          />
         </View>
 
-        {/* Настройки тогглов */}
-        <View style={styles.settingsCard}>
-          <View style={styles.switchRow}>
-            <View style={styles.switchLabelBox}>
-              <Text style={styles.switchIcon}>⚠️</Text>
-              <View>
-                <Text style={styles.switchTitle}>Шұғыл кешігулер</Text>
-                <Text style={styles.switchSub}>
-                  Қызмет үзілістері туралы жедел хабарламалар
-                </Text>
-              </View>
+        {/* Уведомления */}
+        <View style={styles.alertsList}>
+          {visibleAlerts.length === 0 ? (
+            <View style={styles.emptyBox}>
+              <Ionicons name="notifications-off-outline" size={40} color="#94A3B8" />
+              <Text style={styles.emptyText}>Жаңа хабарламалар жоқ</Text>
             </View>
-            <Switch
-              value={urgentDelays}
-              onValueChange={setUrgentDelays}
-              trackColor={{ false: "#CBD5E1", true: "#0F2C59" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
+          ) : (
+            visibleAlerts.map((alert) => {
+              const type = ALERT_TYPES[alert.type];
+              return (
+                <View
+                  key={alert.id}
+                  style={[
+                    styles.alertCard,
+                    type.border && { borderLeftWidth: 6, borderLeftColor: type.border },
+                  ]}
+                >
+                  <View style={styles.alertHeader}>
+                    <View style={[styles.badge, { backgroundColor: type.badgeBg }]}>
+                      <Ionicons name={type.icon} size={14} color={type.badgeColor} />
+                      <Text style={[styles.badgeText, { color: type.badgeColor }]}>{type.badge}</Text>
+                    </View>
+                    <Text style={styles.timeAgo}>{alert.time}</Text>
+                  </View>
 
-          <View style={styles.divider} />
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchLabelBox}>
-              <Text style={styles.switchIcon}>🎟️</Text>
-              <View>
-                <Text style={styles.switchTitle}>Брондау растаулары</Text>
-                <Text style={styles.switchSub}>
-                  Квитанциялар мен билет жаңартулары
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={bookingConfirmations}
-              onValueChange={setBookingConfirmations}
-              trackColor={{ false: "#CBD5E1", true: "#0F2C59" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-        </View>
-
-        {/* Уведомление 1: Шұғыл кешігу */}
-        <View style={[styles.alertCard, styles.urgentBorder]}>
-          <View style={styles.alertHeader}>
-            <View style={styles.urgentBadge}>
-              <Text style={styles.urgentBadgeText}>⚠️ ШҰҒЫЛ КЕШІГУ</Text>
-            </View>
-            <Text style={styles.timeAgo}>2 мин бұрын</Text>
-          </View>
-
-          <Text style={styles.alertTitle}>Платформа өзгерді: Поезд 2042</Text>
-          <Text style={styles.alertDesc}>
-            Сағат 09:45-тегі Астана бағытындағы поезд техникалық кешігуге
-            байланысты 12-ші платформадан жөнелтіледі.
-          </Text>
-
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.primaryActionBtn}>
-              <Text style={styles.primaryActionText}>Жаңа бағытты көру</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryActionBtn}>
-              <Text style={styles.secondaryActionText}>Жабу</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Уведомление 2: Брондау расталды */}
-        <View style={[styles.alertCard, styles.confirmBorder]}>
-          <View style={styles.alertHeader}>
-            <View style={styles.confirmBadge}>
-              <Text style={styles.confirmBadgeText}>ℹ️ БРОНДАУ РАСТАЛДЫ</Text>
-            </View>
-            <Text style={styles.timeAgo}>45 мин бұрын</Text>
-          </View>
-
-          <Text style={styles.alertTitle}>Билет берілді: Алматы 2</Text>
-          <Text style={styles.alertDesc}>
-            14:20 сапарына арналған электронды билетіңіз дайын. Турникетте
-            QR-кодты дайындап қойыңыз.
-          </Text>
-
-          <TouchableOpacity
-            style={styles.primaryActionBtn}
-            onPress={() => navigation.navigate("TicketConfirmation")}
-          >
-            <Text style={styles.primaryActionText}>Билетті көру</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Уведомление 3: Платформа жаңартуы */}
-        <View style={styles.alertCard}>
-          <View style={styles.alertHeader}>
-            <View style={styles.updateBadge}>
-              <Text style={styles.updateBadgeText}>⚙️ ПЛАТФОРМА ЖАҢАРТУЫ</Text>
-            </View>
-            <Text style={styles.timeAgo}>2 сағ бұрын</Text>
-          </View>
-
-          <Text style={styles.alertTitle}>Жаңа Терминал Wi-Fi</Text>
-          <Text style={styles.alertDesc}>
-            Барлық күту залында тегін 5G Wi-Fi іске қосылды.
-            'RailwayConnect_Free' желісіне қосылыңыз.
-          </Text>
-        </View>
-
-        {/* Уведомление 4: Уақытында */}
-        <View style={[styles.alertCard, styles.onTimeBorder]}>
-          <View style={styles.alertHeader}>
-            <View style={styles.onTimeBadge}>
-              <Text style={styles.onTimeBadgeText}>✓ УАҚЫТЫНДА</Text>
-            </View>
-            <Text style={styles.timeAgo}>5 сағ бұрын</Text>
-          </View>
-
-          <Text style={styles.alertTitle}>Поезд 112: Келу қалыпты</Text>
-          <Text style={styles.alertDesc}>
-            Таңертеңгі қала маңындағы поездар 99% дәлдікпен кешікпей жүріп
-            жатыр. Қауіпсіз сапар!
-          </Text>
+                  <Text style={styles.alertTitle}>{alert.title}</Text>
+                  {renderDescription(alert)}
+                  {renderActions(alert)}
+                </View>
+              );
+            })
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
