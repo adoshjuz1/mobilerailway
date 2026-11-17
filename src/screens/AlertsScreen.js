@@ -45,6 +45,40 @@ const ALERT_TYPES = {
   },
 };
 
+const ALERTS = [
+  {
+    id: 'a1',
+    type: 'urgent',
+    time: '2 минут бұрын',
+    title: 'Платформа өзгерді: Поезд 007',
+    text: 'Сағат 09:45-тегі Астана бағытындағы поезд техникалық кешігуге байланысты 12-ші платформадан жөнелтіледі.',
+    highligh: '12-ші платформадан',
+    actions: ['route', 'dismiss'],
+  },
+  {
+    id: 'a2',
+    type: 'booking',
+    time: '45 мин бұрын',
+    title: 'Билет берілді: Алматы 2',
+    text: '14:20 сапарына арналған электронды билетіңіз дайын. Турникетте QR-кодты дайындап қойыңыз.',
+    actions: ['ticket'],
+  },
+  {
+    id: 'a3',
+    type: 'platform',
+    time: '2 сағ бұрын',
+    title: 'Жаңа терминал Wi-Fi',
+    text: "Барлық күту залында тегін 5G Wi-Fi іске қосылды. 'RailwayConnect_Free' желісіне қосылыңыз",
+  },
+  {
+    id: 'a4',
+    type: 'ontime',
+    time: '5 сағ бұрын',
+    title: 'Поезд 112: келу қалыпты',
+    text: 'Таңертеңгі қала маңындағы поездар 99% дәлдікпен кешікпей жүріп жатыр. Қауіпсіз сапар!',
+  },
+];
+
 export default function AlertsScreen({ navigation }) {
   const [urgentDelays, setUrgentDelays] = useState(true);
   const [bookingConfirmations, setBookingConfirmations] = useState(true);
