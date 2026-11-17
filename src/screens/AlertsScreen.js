@@ -52,7 +52,7 @@ const ALERTS = [
     time: '2 минут бұрын',
     title: 'Платформа өзгерді: Поезд 007',
     text: 'Сағат 09:45-тегі Астана бағытындағы поезд техникалық кешігуге байланысты 12-ші платформадан жөнелтіледі.',
-    highligh: '12-ші платформадан',
+    highlight: '12-ші платформадан',
     actions: ['route', 'dismiss'],
   },
   {
@@ -90,6 +90,31 @@ export default function AlertsScreen({ navigation }) {
     if (alert.type === 'booking' && !bookingConfirmations) return false;
     return true;
   });
+
+  const openTicket = () => {
+    const trip = UPCOMING_TRIPS[0];
+    navigation.navigate('TicketConfirmation', {
+      train: trip.train,
+      date: trip.date,
+      seats: trip.seats,
+      carriage: trip.carriage,
+      ticketId: trip.ticketId,
+    });
+  };
+
+  const renderDescription = (alert) => {
+    if (!alert.highlight) {
+      return <Text style={styles.alertDesc}>{alert.text}</Text>;
+    }
+    const [before, after] = alert.text.split(alert.highlight);
+    return (
+      <Text style={styles.alertDesc}>
+        {before}
+        <Text style={styles.alertHighlight}>{alert.highlight}</Text>
+        {after}
+      </Text>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
