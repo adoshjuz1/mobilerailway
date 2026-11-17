@@ -82,6 +82,14 @@ const ALERTS = [
 export default function AlertsScreen({ navigation }) {
   const [urgentDelays, setUrgentDelays] = useState(true);
   const [bookingConfirmations, setBookingConfirmations] = useState(true);
+  const [dismissedIds, setDismissedIds] = useState([]);
+
+  const visibleAlerts = ALERTS.filter((alert) => {
+    if (dismissedIds.includes(alert.id)) return false;
+    if (alert.type === 'urgent' && !urgentDelays) return false;
+    if (alert.type === 'booking' && !bookingConfirmations) return false;
+    return true;
+  });
 
   return (
     <SafeAreaView style={styles.container}>
