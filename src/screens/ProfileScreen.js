@@ -80,35 +80,46 @@ export default function ProfileScreen({ navigation }) {
             <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
           </TouchableOpacity>
         ))}
-        
+
         {/* Секция: Сақталған төлемдер */}
         <Text
-          style={[styles.sectionTitle, { marginTop: 20, marginBottom: 12 }]}
-        >
-          Сақталған төлемдер
-        </Text>
+          style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}>Сақталған төлемдер</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={{ marginBottom: 20 }}
+          style={styles.cardsScroll}
+          contentContainerStyle={{ paddingRight: 20 }}
         >
-          <View style={styles.creditCardBox}>
-            <View style={styles.cardHeader}>
+          <View style={styles.bankCard}>
+            <View style={styles.bankCardTop}>
               <Text style={styles.cardTypeLabel}>САЯХАТШЫ КАРТАСЫ</Text>
-              <Text style={{ fontSize: 16 }}>📶</Text>
+              <View style={styles.contactlessIcon}>
+                <Ionicons name="wifi" size={16} color="#FFFFFF" style={{ transform: [{ rotate: '90deg' }] }} />
+              </View>
             </View>
-            <Text style={styles.cardNumber}>•••• •••• •••• 4290</Text>
-            <View style={styles.cardFooter}>
+            <Text style={styles.bankCardNumber}>**** **** **** 4290</Text>
+            <View style={styles.bankCardBottom}>
               <View>
-                <Text style={styles.cardSubLabel}>ИЕСІ</Text>
-                <Text style={styles.cardSubValue}>ALEX WALKER</Text>
+                <Text style={styles.bankCardSmallLabel}> КАРТА ИЕСІ</Text>
+                <Text style={styles.bankCardValue}>ABDURAKHMAN KURMASH</Text>
               </View>
               <View>
-                <Text style={styles.cardSubLabel}>МЕРЗІМІ</Text>
-                <Text style={styles.cardSubValue}>12/26</Text>
+                <Text style={styles.bankCardSmallLabel}>МЕРЗІМІ</Text>
+                <Text style={styles.bankCardValue}>12/26</Text>
               </View>
             </View>
           </View>
+
+
+          <View style={[styles.bankCard, styles.bankCardDark]}>
+            <View style={styles.bankCardTop}>
+              <Ionicons name="apps" size={22} color="#FFFFFF" />
+            </View>
+            <Text style={styles.walletTitlEe}>Apple Pay</Text>
+            <Text style={styles.walletSub}>Express Transit қосулы</Text>
+            <Text style={[styles.walletSub, {color: '#FFFFFF', fontWeight: '700', marginTop: 14 }]}>
+              Құрылғыға байланған
+            </Text>
         </ScrollView>
 
         {/* Настройки */}
