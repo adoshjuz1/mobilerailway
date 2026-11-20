@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,26 +8,27 @@ import {
   SafeAreaView,
   StatusBar,
   Switch,
-} from "react-native";
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import { colors, fonts } from '../theme';
 
+// Данные профиля пока заглушки, позже будут приходить из базы данных
 const USER = {
-  name: 'Abdurakhman Kurmash',
+  name: 'Абдурахман Құрмаш',
   email: 'abdurakhmankurmash@gmail.com',
-  level: 'Бишара мүшесі',
-}
+  level: 'Шүкір мүшесі',
+};
 
-// данные профиля, пока заглушки
 const TRAVELERS = [
-  { id: 't1', name: 'Kydybek Kurmas', sub: 'Ағасы • Ересек', icons: 'person-outline', bg: colors.mint, color: '#006C49'},
-  { id: 't2', name: 'Ismail Orazgali', sub: 'Інісі • Бала', icons: 'happy-outline', bg: '#DCE5FA', color: colors.primary },
+  { id: 't1', name: 'Қыдырбек Құрмаш', sub: 'Ағасы • Ересек', icon: 'person-outline', bg: colors.mint, color: '#006C49' },
+  { id: 't2', name: 'Исмаил Оразғали', sub: 'Інісі • Бала', icon: 'happy-outline', bg: '#DCE5FA', color: colors.primary },
 ];
 
 export default function ProfileScreen({ navigation }) {
   const [tripAlerts, setTripAlerts] = useState(true);
 
+  // Выход: сбрасываем весь стек навигации, чтобы с экрана входа нельзя было вернуться назад
   const handleLogout = () => {
     const rootNavigation = navigation.getParent() || navigation;
     rootNavigation.reset({ index: 0, routes: [{ name: 'Login', params: { initialTab: 'login' } }] });
@@ -36,11 +37,9 @@ export default function ProfileScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        <Header /> 
-        
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <Header />
+
         {/* Профиль пользователя */}
         <View style={styles.profileSection}>
           <View style={styles.avatarWrap}>
@@ -55,11 +54,11 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.userEmail}>{USER.email}</Text>
           <View style={styles.levelBadge}>
             <Ionicons name="star" size={14} color="#5C2A12" />
-            <Text style={styles.goldBadgeText}>{USER.level}</Text>
+            <Text style={styles.levelBadgeText}>{USER.level}</Text>
           </View>
         </View>
 
-        {/* Секция: Жиі саяхаттайтындар */}
+        {/* Жиі саяхаттайтындар */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Жиі саяхаттайтындар</Text>
           <TouchableOpacity style={styles.addLink}>
@@ -73,7 +72,7 @@ export default function ProfileScreen({ navigation }) {
             <View style={[styles.travelerAvatar, { backgroundColor: traveler.bg }]}>
               <Ionicons name={traveler.icon} size={22} color={traveler.color} />
             </View>
-            <View style={{ flex: 1}}>
+            <View style={{ flex: 1 }}>
               <Text style={styles.travelerName}>{traveler.name}</Text>
               <Text style={styles.travelerSub}>{traveler.sub}</Text>
             </View>
@@ -81,9 +80,8 @@ export default function ProfileScreen({ navigation }) {
           </TouchableOpacity>
         ))}
 
-        {/* Секция: Сақталған төлемдер */}
-        <Text
-          style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}>Сақталған төлемдер</Text>
+        {/* Сақталған төлемдер */}
+        <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}>Сақталған төлемдер</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -92,7 +90,7 @@ export default function ProfileScreen({ navigation }) {
         >
           <View style={styles.bankCard}>
             <View style={styles.bankCardTop}>
-              <Text style={styles.cardTypeLabel}>САЯХАТШЫ КАРТАСЫ</Text>
+              <Text style={styles.bankCardLabel}>САЯХАТШЫ КАРТАСЫ</Text>
               <View style={styles.contactlessIcon}>
                 <Ionicons name="wifi" size={16} color="#FFFFFF" style={{ transform: [{ rotate: '90deg' }] }} />
               </View>
@@ -100,26 +98,26 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.bankCardNumber}>**** **** **** 4290</Text>
             <View style={styles.bankCardBottom}>
               <View>
-                <Text style={styles.bankCardSmallLabel}> КАРТА ИЕСІ</Text>
+                <Text style={styles.bankCardSmallLabel}>КАРТА ИЕСІ</Text>
                 <Text style={styles.bankCardValue}>ABDURAKHMAN KURMASH</Text>
               </View>
-              <View>
+              <View style={{ alignItems: 'flex-end' }}>
                 <Text style={styles.bankCardSmallLabel}>МЕРЗІМІ</Text>
                 <Text style={styles.bankCardValue}>12/26</Text>
               </View>
             </View>
           </View>
 
-
           <View style={[styles.bankCard, styles.bankCardDark]}>
             <View style={styles.bankCardTop}>
               <Ionicons name="apps" size={22} color="#FFFFFF" />
             </View>
-            <Text style={styles.walletTitlEe}>Apple Pay</Text>
+            <Text style={styles.walletTitle}>Apple Pay</Text>
             <Text style={styles.walletSub}>Express Transit қосулы</Text>
-            <Text style={[styles.walletSub, {color: '#FFFFFF', fontWeight: '700', marginTop: 14 }]}>
+            <Text style={[styles.walletSub, { color: '#FFFFFF', fontWeight: '700', marginTop: 14 }]}>
               Құрылғыға байланған
             </Text>
+          </View>
         </ScrollView>
 
         {/* Настройки */}
@@ -145,7 +143,7 @@ export default function ProfileScreen({ navigation }) {
               <Text style={styles.settingsTitle}>Валюта</Text>
               <Text style={styles.settingsSub}>Теңге (₸)</Text>
             </View>
-            <Ionicons name="chevron-forward" siez={20} color={colors.onSurfaceVariant} />
+            <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -161,13 +159,13 @@ export default function ProfileScreen({ navigation }) {
             <Switch
               value={tripAlerts}
               onValueChange={setTripAlerts}
-              trackColor={{ false: "#C3C6D6", true: "#006C49" }}
+              trackColor={{ false: '#C3C6D6', true: '#006C49' }}
               thumbColor="#FFFFFF"
             />
           </View>
         </View>
 
-        {/* Поддержка */}
+        {/* Қолдау */}
         <Text style={styles.supportLabel}>Қолдау</Text>
         <View style={styles.group}>
           <TouchableOpacity style={styles.supportItem}>
@@ -191,7 +189,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.logoutText}>Шығу</Text>
         </TouchableOpacity>
 
-        <Text style={styles.versionText}>RAILWAY CONNECT V2.4.0 • ABDURAKHMAN-K-Бишара</Text>
+        <Text style={styles.versionText}>RAILWAY CONNECT V2.4.0 • ALEX-W-GOLD</Text>
       </ScrollView>
     </SafeAreaView>
   );
