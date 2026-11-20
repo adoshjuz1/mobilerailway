@@ -9,9 +9,29 @@ import {
   StatusBar,
   Switch,
 } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import Header from '../components/Header';
+import { colors, fonts } from '../theme';
+
+const USER = {
+  name: 'Abdurakhman Kurmash',
+  email: 'abdurakhmankurmash@gmail.com',
+  level: 'Бишара мүшесі',
+}
+
+// данные профиля, пока заглушки
+const TRAVELERS = [
+  { id: 't1', name: 'Kydybek Kurmas', sub: 'Ағасы • Ересек', icons: 'person-outline', bg: colors.mint, color: '#006C49'},
+  { id: 't2', name: 'Ismail Orazgali', sub: 'Інісі • Бала', icons: 'happy-outline', bg: '#DCE5FA', color: colors.primary },
+];
 
 export default function ProfileScreen({ navigation }) {
   const [tripAlerts, setTripAlerts] = useState(true);
+
+  const handleLogout = () => {
+    const rootNavigation = navigation.getParent() || navigation;
+    rootNavigation.reset({ index: 0, routes: [{ name: 'Login', params: { initialTab: 'login' } }] });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
