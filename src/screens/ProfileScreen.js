@@ -40,7 +40,6 @@ export default function ProfileScreen({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <Header />
-
         {/* Профиль пользователя */}
         <View style={styles.profileSection}>
           <View style={styles.avatarWrap}>
