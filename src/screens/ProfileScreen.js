@@ -48,7 +48,7 @@ export default function ProfileScreen({ navigation }) {
               <Ionicons name="person" size={52} color={colors.primary} />
             </View>
             <TouchableOpacity style={styles.editAvatarBtn}>
-              <Ionicons name="pencil" size={14} color="#FFFFF" />
+              <Ionicons name="pencil" size={14} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           <Text style={styles.userName}>{USER.name}</Text>
@@ -62,33 +62,25 @@ export default function ProfileScreen({ navigation }) {
         {/* Секция: Жиі саяхаттайтындар */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Жиі саяхаттайтындар</Text>
-          <TouchableOpacity>
-            <Text style={styles.addLink}>+ Жаңасын қосу</Text>
+          <TouchableOpacity style={styles.addLink}>
+            <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+            <Text style={styles.addLinkText}>Жаңасын қосу</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.travelerCard}>
-          <View style={[styles.avatarCircle, { backgroundColor: "#DCFCE7" }]}>
-            <Text style={{ fontSize: 16 }}>👩</Text>
-          </View>
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.travelerName}>Сара Уолкер</Text>
-            <Text style={styles.travelerSub}>Жұбайы • Ересек</Text>
-          </View>
-          <Text style={styles.arrowIcon}>›</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.travelerCard}>
-          <View style={[styles.avatarCircle, { backgroundColor: "#DBEAFE" }]}>
-            <Text style={{ fontSize: 16 }}>👦</Text>
-          </View>
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.travelerName}>Лео Уолкер</Text>
-            <Text style={styles.travelerSub}>Улы • Бала</Text>
-          </View>
-          <Text style={styles.arrowIcon}>›</Text>
-        </TouchableOpacity>
-
+        {TRAVELERS.map((traveler) => (
+          <TouchableOpacity key={traveler.id} style={styles.travelerCard}>
+            <View style={[styles.travelerAvatar, { backgroundColor: traveler.bg }]}>
+              <Ionicons name={traveler.icon} size={22} color={traveler.color} />
+            </View>
+            <View style={{ flex: 1}}>
+              <Text style={styles.travelerName}>{traveler.name}</Text>
+              <Text style={styles.travelerSub}>{traveler.sub}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+          </TouchableOpacity>
+        ))}
+        
         {/* Секция: Сақталған төлемдер */}
         <Text
           style={[styles.sectionTitle, { marginTop: 20, marginBottom: 12 }]}
