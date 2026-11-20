@@ -123,81 +123,75 @@ export default function ProfileScreen({ navigation }) {
         </ScrollView>
 
         {/* Настройки */}
-        <View style={styles.settingsGroup}>
+        <View style={styles.group}>
           <TouchableOpacity style={styles.settingsItem}>
-            <Text style={styles.settingsIcon}>🌐</Text>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.settingsTitle}>Тіл (Language)</Text>
-              <Text style={styles.settingsSub}>Қазақша (KZ)</Text>
+            <View style={styles.settingsIcon}>
+              <Ionicons name="globe-outline" size={22} color={colors.primary} />
             </View>
-            <Text style={styles.arrowIcon}>›</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.settingsTitle}>Тіл</Text>
+              <Text style={styles.settingsSub}>Қазақша</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
 
           <TouchableOpacity style={styles.settingsItem}>
-            <Text style={styles.settingsIcon}>💱</Text>
-            <View style={{ flex: 1, marginLeft: 12 }}>
+            <View style={styles.settingsIcon}>
+              <Ionicons name="cash-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.settingsTitle}>Валюта</Text>
               <Text style={styles.settingsSub}>Теңге (₸)</Text>
             </View>
-            <Text style={styles.arrowIcon}>›</Text>
+            <Ionicons name="chevron-forward" siez={20} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
 
           <View style={styles.settingsItem}>
-            <Text style={styles.settingsIcon}>🔔</Text>
-            <View style={{ flex: 1, marginLeft: 12 }}>
+            <View style={styles.settingsIcon}>
+              <Ionicons name="notifications-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.settingsTitle}>Сапар ескертулері</Text>
-              <Text style={styles.settingsSub}>Push және SMS хабарламалар</Text>
+              <Text style={styles.settingsSub}>Push және SMS қосулы</Text>
             </View>
             <Switch
               value={tripAlerts}
               onValueChange={setTripAlerts}
-              trackColor={{ false: "#CBD5E1", true: "#0F2C59" }}
+              trackColor={{ false: "#C3C6D6", true: "#006C49" }}
               thumbColor="#FFFFFF"
             />
           </View>
         </View>
 
         {/* Поддержка */}
-        <Text
-          style={[styles.sectionTitle, { marginTop: 20, marginBottom: 12 }]}
-        >
-          Қолдау
-        </Text>
-        <View style={styles.settingsGroup}>
-          <TouchableOpacity style={styles.settingsItem}>
-            <Text style={styles.settingsIcon}>❓</Text>
-            <Text style={[styles.settingsTitle, { flex: 1, marginLeft: 12 }]}>
-              Анықтама орталығы
-            </Text>
-            <Text style={styles.arrowIcon}>↗</Text>
+        <Text style={styles.supportLabel}>Қолдау</Text>
+        <View style={styles.group}>
+          <TouchableOpacity style={styles.supportItem}>
+            <Ionicons name="help-circle-outline" size={22} color={colors.primary} />
+            <Text style={styles.supportTitle}>Анықтама орталығы</Text>
+            <Ionicons name="open-outline" size={20} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.settingsItem}>
-            <Text style={styles.settingsIcon}>🛡️</Text>
-            <Text style={[styles.settingsTitle, { flex: 1, marginLeft: 12 }]}>
-              Купуялық саясаты
-            </Text>
-            <Text style={styles.arrowIcon}>›</Text>
+          <TouchableOpacity style={styles.supportItem}>
+            <Ionicons name="shield-checkmark-outline" size={22} color={colors.primary} />
+            <Text style={styles.supportTitle}>Құпиялылық саясаты</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
         </View>
 
-        {/* Кнопка выхода */}
-        <TouchableOpacity
-          style={styles.logoutBtn}
-          onPress={() => navigation.navigate("Login")}
-        >
-          <Text style={styles.logoutText}>🚪 Шығу</Text>
+        {/* Выход */}
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={22} color="#BA1A1A" />
+          <Text style={styles.logoutText}>Шығу</Text>
         </TouchableOpacity>
 
-        <Text style={styles.versionText}>
-          RAILWAY CONNECT V2.4.0 • ALEX-W-GOLD
-        </Text>
+        <Text style={styles.versionText}>RAILWAY CONNECT V2.4.0 • ABDURAKHMAN-K-Бишара</Text>
       </ScrollView>
     </SafeAreaView>
   );
