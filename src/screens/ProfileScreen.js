@@ -35,34 +35,27 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Шапка */}
-        <View style={styles.topHeader}>
-          <Text style={styles.hamburgerIcon}>☰</Text>
-          <Text style={styles.brandTitle}>Railway Connect</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-            <View style={styles.avatarPlaceholder}>
-              <Text style={{ fontSize: 16 }}>👤</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        showsVerticalScrollIndicator={false}>
+        <Header />
 
         {/* Профиль пользователя */}
         <View style={styles.profileSection}>
-          <View style={styles.largeAvatarBox}>
-            <Text style={{ fontSize: 42 }}>👤</Text>
+          <View style={styles.avatarWrap}>
+            <View style={styles.largeAvatar}>
+              <Ionicons name="person" size={52} color={colors.primary} />
+            </View>
             <TouchableOpacity style={styles.editAvatarBtn}>
-              <Text style={styles.editIcon}>✏️</Text>
+              <Ionicons name="pencil" size={14} color="#FFFFF" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>Алекс Уолкер</Text>
-          <Text style={styles.userEmail}>alex.walker@traveler.com</Text>
-          <View style={styles.goldBadge}>
-            <Text style={styles.goldBadgeText}>★ Gold Мүшесі</Text>
+          <Text style={styles.userName}>{USER.name}</Text>
+          <Text style={styles.userEmail}>{USER.email}</Text>
+          <View style={styles.levelBadge}>
+            <Ionicons name="star" size={14} color="#5C2A12" />
+            <Text style={styles.goldBadgeText}>{USER.level}</Text>
           </View>
         </View>
 
