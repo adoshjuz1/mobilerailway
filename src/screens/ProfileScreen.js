@@ -154,7 +154,7 @@ export default function ProfileScreen({ navigation }) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.settingsTitle}>Сапар ескертулері</Text>
-              <Text style={styles.settingsSub}>Push және SMS қосулы</Text>
+              <Text style={styles.settingsSub}>Push және SMS хабарламалар</Text>
             </View>
             <Switch
               value={tripAlerts}
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
     color: colors.onSurface,
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   addLinkText: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '500',
     color: colors.primary,
   },
