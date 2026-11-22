@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,27 +8,31 @@ import {
   StatusBar,
   Image,
   Animated,
-} from "react-native";
+} from 'react-native';
 import { colors } from '../theme';
 
+// Слайды вынесены из компонента: это просто данные, они не зависят от состояния
 const SLIDES = [
   {
-    title: "Оңай іздеу",
+    title: 'Оңай іздеу',
     subtitle:
-      "Интеллектуальды бағыт жоспарлаушымыздың көмегімен ең жақсы бағыттар мен бағаларды секундтарда табыңыз.",
-    imd: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQs-DdhaaGYk3676IU_OsExLH7fqN-lsOMipwD4ylA3xA&s=10",
+      'Интеллектуалды бағыт жоспарлаушымыздың көмегімен ең жақсы бағыттар мен бағаларды секундтарда табыңыз.',
+    image:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQs-DdhaaGYk3676IU_OsExLH7fqN-lsOMipwD4ylA3xA&s=10',
   },
   {
-    title: "Ыңғайлы кесте",
+    title: 'Ыңғайлы кесте',
     subtitle:
-      "Поезердің қозғалыс кестесін нақты уақыт режимінде қадағалап, өзіңізге ыңғайлы уақытты таңдаңыз.",
-    imd: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd84zcpfTxMYn_SlsIgrx12maccAwXGgbOOzVj12UbVw&s=10",
+      'Пойыздардың қозғалыс кестесін нақты уақыт режимінде қадағалап, өзіңізге ыңғайлы уақытты таңдаңыз.',
+    image:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd84zcpfTxMYn_SlsIgrx12maccAwXGgbOOzVj12UbVw&s=10',
   },
   {
-    title: "Қауіпсіз төлем",
+    title: 'Қауіпсіз төлем',
     subtitle:
-      "Билеттерді сенімді әрі қауіпсіз төлем жүйелері арқылы комиссиясыз сатып алыңыз.",
-    imd: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJgey8LIMlO270We3_YjvyeUkh3NrKxrdGE4nu4L4ADA&s=10",
+      'Билеттерді сенімді әрі қауіпсіз төлем жүйелері арқылы комиссиясыз сатып алыңыз.',
+    image:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJgey8LIMlO270We3_YjvyeUkh3NrKxrdGE4nu4L4ADA&s=10',
   },
 ];
 
@@ -37,9 +41,12 @@ const DOT_WIDTH = 8;
 
 export default function OnboardingScreen({ navigation }) {
   const [currentStep, setCurrentStep] = useState(0);
+
+  // По одному анимированному значению ширины на каждую точку-индикатор
   const dotWidths = useRef(
     SLIDES.map((_, i) => new Animated.Value(i === 0 ? DOT_ACTIVE_WIDTH : DOT_WIDTH)),
   ).current;
+
   const animateDots = (toStep) => {
     dotWidths.forEach((anim, i) => {
       Animated.timing(anim, {
@@ -49,77 +56,68 @@ export default function OnboardingScreen({ navigation }) {
       }).start();
     });
   };
+
   const handleNext = () => {
     if (currentStep < SLIDES.length - 1) {
       const nextStep = currentStep + 1;
       setCurrentStep(nextStep);
       animateDots(nextStep);
     } else {
-      navigation.replace("Login", { initialTab: "signup" }); // 👈 Переходим сразу на регистрацию
+      // На последнем слайде сразу открываем регистрацию
+      navigation.replace('Login', { initialTab: 'signup' });
     }
   };
 
+  const slide = SLIDES[currentStep];
+  const isLastSlide = currentStep === SLIDES.length - 1;
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
       {/* Шапка */}
       <View style={styles.header}>
         <Text style={styles.brandTitle}>Railway Connect</Text>
-        <TouchableOpacity
-          onPress={() => navigation.replace("Login", { initialTab: "signup" })}
-        >
+        <TouchableOpacity onPress={() => navigation.replace('Login', { initialTab: 'signup' })}>
           <Text style={styles.skipText}>Өткізу</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Центральная часть с иллюстрацией */}
+      {/* Иллюстрация и текст слайда */}
       <View style={styles.content}>
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: slid[currentStep].imd }}
-            style={styles.trainImage}
-            resizeMode="contain"
-          />
+          <Image source={{ uri: slide.image }} style={styles.trainImage} resizeMode="contain" />
         </View>
 
-        <Text style={styles.title}>{slid[currentStep].title}</Text>
-        <Text style={styles.subtitle}>{slid[currentStep].subtitle}</Text>
+        <Text style={styles.title}>{slide.title}</Text>
+        <Text style={styles.subtitle}>{slide.subtitle}</Text>
 
         {/* Индикатор слайдов */}
         <View style={styles.pagination}>
-          {slid.map((_, index) => {
-            return (
-              <Animated.View
-                key={index}
-                style={[
-                  styles.dot,
-                  {
-                    width: animValues[index],
-                    backgroundColor:
-                      currentStep === index ? "#003d9b" : "#c3c6d6",
-                  },
-                ]}
-              />
-            );
-          })}
+          {SLIDES.map((_, index) => (
+            <Animated.View
+              key={index}
+              style={[
+                styles.dot,
+                {
+                  width: dotWidths[index],
+                  backgroundColor: currentStep === index ? colors.primary : colors.outline,
+                },
+              ]}
+            />
+          ))}
         </View>
       </View>
 
       {/* Нижняя часть */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.nextButton} onPress={slamNext}>
-          <Text style={styles.nextButtonText}>
-            {currentStep === slid.length - 1 ? "Бастау" : "Келесі"}
-          </Text>
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+          <Text style={styles.nextButtonText}>{isLastSlide ? 'Бастау' : 'Келесі'}</Text>
         </TouchableOpacity>
 
         <View style={styles.loginRow}>
           <Text style={styles.accountText}>Аккаунтыңыз бар ма? </Text>
-          <TouchableOpacity
-            onPress={() => navigation.replace("Login", { initialTab: "login" })}
-          >
+          <TouchableOpacity onPress={() => navigation.replace('Login', { initialTab: 'login' })}>
             <Text style={styles.loginLink}>Кіру</Text>
           </TouchableOpacity>
         </View>
