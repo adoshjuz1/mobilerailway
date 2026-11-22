@@ -1,5 +1,5 @@
 // заглушка
-export const USE_MOCK_TRAINS = true;
+export const USE_MOCK_TRAINS = false;
 
 const MOCK_TRAINS = [
   {
