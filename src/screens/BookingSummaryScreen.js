@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Header from "../components/Header";
 import { colors, fonts } from "../theme";
 
-const BOOKING_FEE = 450;
+const BOOKING_FEE = 0;
 
 // 2026-10-16 -> 16.10.2026
 const formatDate = (iso) => {
