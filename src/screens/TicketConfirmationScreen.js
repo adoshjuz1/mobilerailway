@@ -49,11 +49,9 @@ const generateTicketId = () => {
 };
 
 const getSeatText = (seats) => {
-  if (seats.length !== 1) return seats.join(", ");
-  const side = ["A", "B"].includes(seats[0].slice(-1))
-    ? "Терезе жағы"
-    : "Жол жағы";
-  return `${seats[0]} (${side})`;
+  if (seats.length !== 1) return seats.join(', ');
+  const kind = Number(seats[0]) % 2 === 1 ? 'төменгі' : 'жоғарғы';
+  return `${seats[0]} (${kind})`;
 };
 
 export default function TicketConfirmationScreen({ route, navigation }) {
