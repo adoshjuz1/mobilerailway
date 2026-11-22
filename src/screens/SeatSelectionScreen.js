@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,108 +7,139 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Header from "../components/Header";
-import { colors, fonts } from "../theme";
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Header from '../components/Header';
+import { colors, fonts } from '../theme';
 
-const ROWS = [1, 2, 3, 4, 5, 6, 7, 8];
-const WINDOW_LETTERS = ["A", "B"];
-const AISLE_LETTERS = ["C", "D"];
+// Стандарт = Плацкарт, 1-ші класс = Купе (как в базе данных сайта)
+const CARRIAGE_TYPE_BY_CLASS = { standard: 'Плацкарт', first: 'Купе' };
+
+// Первые 36 мест это купе по 4 места, остальные (в плацкарте 37-54) боковые
+const MAIN_SEATS = 36;
 const MAX_SEATS = 4;
-const CARRIAGE = "04";
 
-// Занятые места пока заглушка, потом будут приходить с бэкенда
-const OCCUPIED_SEATS = [
-  "2A",
-  "4A",
-  "4B",
-  "3C",
-  "2D",
-  "3D",
-  "7A",
-  "6B",
-  "8C",
-  "6D",
-];
+// Раскладка мест вагона: по колонке на каждое купе, 4 ряда (A, B, C, D) и ряды боковых мест
+const buildLayout = (seats) => {
+  const byNumber = {};
+  seats.forEach((seat) => {
+    byNumber[seat.number] = seat;
+  });
 
-// Порядок для списка выбранных мест: по номеру ряда, затем по букве
-const sortSeats = (seats) =>
-  [...seats].sort(
-    (a, b) => parseInt(a, 10) - parseInt(b, 10) || a.localeCompare(b),
+  const mainCount = seats.filter((s) => s.number <= MAIN_SEATS).length;
+  const sideCount = seats.filter((s) => s.number > MAIN_SEATS).length;
+  const compartments = Math.ceil(mainCount / 4);
+  const sidePairs = Math.ceil(sideCount / 2);
+
+  const rows = [0, 1, 2, 3].map((r) =>
+    Array.from({ length: compartments }, (_, k) => byNumber[k * 4 + r + 1] || null),
   );
+  const sideRows =
+    sideCount > 0
+      ? [0, 1].map((r) =>
+          Array.from({ length: sidePairs }, (_, k) => byNumber[MAIN_SEATS + k * 2 + r + 1] || null),
+        )
+      : [];
+
+  return { rows, sideRows };
+};
 
 export default function SeatSelectionScreen({ route, navigation }) {
-  const {
-    train = {},
-    date,
-    selectedClass = "standard",
-    price,
-  } = route.params || {};
+  const { train = {}, date, selectedClass = 'standard' } = route.params || {};
   const insets = useSafeAreaInsets();
+
+  const carriageType = CARRIAGE_TYPE_BY_CLASS[selectedClass];
+  const carriages = (train.carriages || []).filter((c) => c.type === carriageType);
+
+  const [carriageNumber, setCarriageNumber] = useState(carriages[0]?.number);
   const [selectedSeats, setSelectedSeats] = useState([]);
 
-  const handleSeatPress = (seatId) => {
-    if (OCCUPIED_SEATS.includes(seatId)) return;
+  const carriage = carriages.find((c) => c.number === carriageNumber);
+  const seats = carriage?.seats || [];
+  const seatsByNumber = {};
+  seats.forEach((seat) => {
+    seatsByNumber[seat.number] = seat;
+  });
+  const { rows, sideRows } = buildLayout(seats);
 
-    if (selectedSeats.includes(seatId)) {
-      setSelectedSeats(selectedSeats.filter((s) => s !== seatId));
+  const sortedSeats = [...selectedSeats].sort((a, b) => a - b);
+  const totalPrice = selectedSeats.reduce((sum, n) => sum + (seatsByNumber[n]?.price || 0), 0);
+  const hasSelection = selectedSeats.length > 0;
+
+  // При смене вагона выбранные места сбрасываются: заказ оформляется на один вагон
+  const handleCarriagePress = (number) => {
+    setCarriageNumber(number);
+    setSelectedSeats([]);
+  };
+
+  const handleSeatPress = (seat) => {
+    if (seat.is_occupied) return;
+
+    if (selectedSeats.includes(seat.number)) {
+      setSelectedSeats(selectedSeats.filter((n) => n !== seat.number));
     } else if (selectedSeats.length < MAX_SEATS) {
-      setSelectedSeats([...selectedSeats, seatId]);
+      setSelectedSeats([...selectedSeats, seat.number]);
     }
   };
 
-  const renderSeat = (seatId) => {
-    const isOccupied = OCCUPIED_SEATS.includes(seatId);
-    const isSelected = selectedSeats.includes(seatId);
+  const renderSeat = (seat, index) => {
+    // Пустая ячейка, если места с таким номером нет в вагоне
+    if (!seat) return <View key={`empty-${index}`} style={styles.seatEmpty} />;
+
+    const isSelected = selectedSeats.includes(seat.number);
 
     return (
       <TouchableOpacity
-        key={seatId}
-        disabled={isOccupied}
+        key={seat.number}
+        disabled={seat.is_occupied}
         activeOpacity={0.7}
         style={[
           styles.seat,
-          isOccupied && styles.seatOccupied,
+          seat.is_occupied && styles.seatOccupied,
           isSelected && styles.seatSelected,
         ]}
-        onPress={() => handleSeatPress(seatId)}
+        onPress={() => handleSeatPress(seat)}
       >
         <Text
           style={[
             styles.seatText,
-            isOccupied && styles.seatTextOccupied,
+            seat.is_occupied && styles.seatTextOccupied,
             isSelected && styles.seatTextSelected,
           ]}
         >
-          {seatId}
+          {seat.number}
         </Text>
       </TouchableOpacity>
     );
   };
 
-  const renderRow = (letter) => (
-    <View key={letter} style={styles.seatsRow}>
-      {ROWS.map((row) => renderSeat(`${row}${letter}`))}
+  const renderRow = (row, key) => (
+    <View key={key} style={styles.seatsRow}>
+      {row.map(renderSeat)}
     </View>
   );
 
-  const hasSelection = selectedSeats.length > 0;
+  const handleConfirm = () => {
+    navigation.navigate('PassengerInfo', {
+      train,
+      date,
+      selectedClass,
+      price: carriage.price,
+      seats: sortedSeats.map(String),
+      carriage: String(carriageNumber),
+      carriageType,
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Header
           title="Орын таңдау"
           onBack={() => navigation.goBack()}
-          onAvatarPress={() =>
-            navigation.navigate("Main", { screen: "ProfileTab" })
-          }
+          onAvatarPress={() => navigation.navigate('Main', { screen: 'ProfileTab' })}
         />
 
         {/* Карточка поезда */}
@@ -116,130 +147,136 @@ export default function SeatSelectionScreen({ route, navigation }) {
           <View style={styles.trainCardTop}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.trainSubTitle}>ПОЕЗД {train.number}</Text>
-              <Text style={styles.trainTitle} numberOfLines={1}>
-                {train.name}
-              </Text>
+              <Text style={styles.trainTitle} numberOfLines={1}>{train.name}</Text>
             </View>
             <View style={styles.classBadge}>
               <Text style={styles.classBadgeText}>
-                {selectedClass === "first" ? "Бірінші класс" : "Стандарт"}
+                {selectedClass === 'first' ? 'Бірінші класс' : 'Стандарт'}
               </Text>
             </View>
           </View>
 
           <View style={styles.routeTimes}>
             <View>
-              <Text style={styles.timeText}>
-                {train.departure_time || "--:--"}
-              </Text>
+              <Text style={styles.timeText}>{train.departure_time || '--:--'}</Text>
               <Text style={styles.stationSub}>{train.from_city}</Text>
             </View>
             <View style={styles.routeMiddle}>
               <View style={styles.routeLine} />
-              <Ionicons
-                name="train"
-                size={20}
-                color={colors.primary}
-                style={{ marginHorizontal: 10 }}
-              />
+              <Ionicons name="train" size={20} color={colors.primary} style={{ marginHorizontal: 10 }} />
               <View style={styles.routeLine} />
             </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.timeText}>
-                {train.arrival_time || "--:--"}
-              </Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.timeText}>{train.arrival_time || '--:--'}</Text>
               <Text style={styles.stationSub}>{train.to_city}</Text>
             </View>
           </View>
         </View>
 
-        {/* Легенда */}
-        <View style={styles.legendRow}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendBox, styles.legendAvailable]} />
-            <Text style={styles.legendText}>Бос</Text>
+        {carriages.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Ionicons name="alert-circle-outline" size={36} color="#94A3B8" />
+            <Text style={styles.emptyText}>Бұл класта бос вагондар жоқ</Text>
           </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendBox, styles.legendSelected]} />
-            <Text style={styles.legendText}>Таңдалды</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendBox, styles.legendOccupied]} />
-            <Text style={styles.legendText}>Бос емес</Text>
-          </View>
-        </View>
+        ) : (
+          <>
+            {/* Выбор вагона */}
+            <Text style={styles.blockLabel}>Вагонды таңдаңыз</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.chipsScroll}
+              contentContainerStyle={{ gap: 10 }}
+            >
+              {carriages.map((c) => {
+                const active = c.number === carriageNumber;
+                return (
+                  <TouchableOpacity
+                    key={c.number}
+                    style={[styles.chip, active && styles.chipActive]}
+                    onPress={() => handleCarriagePress(c.number)}
+                  >
+                    <Text style={[styles.chipTitle, active && styles.chipTitleActive]}>
+                      Вагон {c.number}
+                    </Text>
+                    <Text style={[styles.chipSub, active && styles.chipSubActive]}>
+                      Бос: {c.seats_left}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
 
-        {/* Схема вагона */}
-        <View style={styles.carriage}>
-          <View style={styles.carriageHeader}>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons
-                name="train"
-                size={20}
-                color={colors.primary}
-                style={{ marginRight: 8 }}
-              />
-              <Text style={styles.carriageTitle}>Вагон {CARRIAGE}</Text>
+            {/* Легенда */}
+            <View style={styles.legendRow}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendBox, styles.legendAvailable]} />
+                <Text style={styles.legendText}>Бос</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendBox, styles.legendSelected]} />
+                <Text style={styles.legendText}>Таңдалды</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendBox, styles.legendOccupied]} />
+                <Text style={styles.legendText}>Бос емес</Text>
+              </View>
             </View>
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <Ionicons
-                name="male-female-outline"
-                size={20}
-                color={colors.onSurfaceVariant}
-              />
-              <Ionicons
-                name="cafe-outline"
-                size={20}
-                color={colors.onSurfaceVariant}
-              />
-            </View>
-          </View>
+            <Text style={styles.legendHint}>Тақ нөмір төменгі орын, жұп нөмір жоғарғы орын</Text>
 
-          <Text style={styles.sideLabel}>Терезе жағы</Text>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View>
-              {WINDOW_LETTERS.map(renderRow)}
-
-              <View style={styles.aisleBar}>
-                <Text style={styles.aisleText}>Ө Т У Ж О Л Ы</Text>
+            {/* Схема вагона */}
+            <View style={styles.carriage}>
+              <View style={styles.carriageHeader}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="train" size={20} color={colors.primary} style={{ marginRight: 8 }} />
+                  <Text style={styles.carriageTitle}>Вагон {carriageNumber} • {carriageType}</Text>
+                </View>
+                <Text style={styles.carriagePrice}>{carriage?.price} ₸</Text>
               </View>
 
-              {AISLE_LETTERS.map(renderRow)}
-            </View>
-          </ScrollView>
+              <Text style={styles.sideLabel}>Терезе жағы</Text>
 
-          <Text style={[styles.sideLabel, { marginTop: 12, marginBottom: 0 }]}>
-            Жол жағы
-          </Text>
-        </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View>
+                  {renderRow(rows[0], 'row-a')}
+                  {renderRow(rows[1], 'row-b')}
+
+                  <View style={styles.aisleBar}>
+                    <Text style={styles.aisleText}>Ө Т У  Ж О Л Ы</Text>
+                  </View>
+
+                  {renderRow(rows[2], 'row-c')}
+                  {renderRow(rows[3], 'row-d')}
+
+                  {sideRows.length > 0 && (
+                    <>
+                      <Text style={[styles.sideLabel, { marginTop: 14 }]}>Бүйір орындар</Text>
+                      {sideRows.map((row, i) => renderRow(row, `side-${i}`))}
+                    </>
+                  )}
+                </View>
+              </ScrollView>
+
+              <Text style={[styles.sideLabel, { marginTop: 12, marginBottom: 0 }]}>Жол жағы</Text>
+            </View>
+          </>
+        )}
       </ScrollView>
 
       {/* Нижняя панель */}
       <View style={[styles.bottomBar, { paddingBottom: 16 + insets.bottom }]}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.bottomSub}>Таңдалған орындар</Text>
-          <Text style={styles.selectedSeatsList}>
-            {hasSelection ? sortSeats(selectedSeats).join(", ") : "Жоқ"}
+          <Text style={styles.selectedSeatsList} numberOfLines={1}>
+            {hasSelection ? sortedSeats.join(', ') : 'Жоқ'}
           </Text>
+          {hasSelection && <Text style={styles.totalText}>{totalPrice} ₸</Text>}
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.confirmBtn,
-            !hasSelection && styles.confirmBtnDisabled,
-          ]}
+          style={[styles.confirmBtn, !hasSelection && styles.confirmBtnDisabled]}
           disabled={!hasSelection}
-          onPress={() =>
-            navigation.navigate("PassengerInfo", {
-              train,
-              date,
-              selectedClass,
-              price,
-              seats: sortSeats(selectedSeats),
-              carriage: CARRIAGE,
-            })
-          }
+          onPress={handleConfirm}
         >
           <Text style={styles.confirmBtnText}>Таңдауды растау</Text>
         </TouchableOpacity>
@@ -255,7 +292,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 130,
+    paddingBottom: 140,
   },
   trainCard: {
     backgroundColor: colors.card,
@@ -263,27 +300,27 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: '#E2E8F0',
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 8,
   },
   trainCardTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 14,
   },
   trainSubTitle: {
     fontSize: 11,
-    fontWeight: "500",
+    fontWeight: '500',
     color: colors.onSurfaceVariant,
     letterSpacing: 0.5,
   },
   trainTitle: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.primary,
   },
   classBadge: {
@@ -293,45 +330,97 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   classBadgeText: {
-    color: "#005236",
+    color: '#005236',
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   routeTimes: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   timeText: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.onSurface,
   },
   stationSub: {
     fontSize: 11,
     color: colors.onSurfaceVariant,
-    textAlign: "center",
+    textAlign: 'center',
   },
   routeMiddle: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 10,
   },
   routeLine: {
     flex: 1,
     height: 2,
-    backgroundColor: "#CBD5E1",
+    backgroundColor: '#CBD5E1',
   },
-  legendRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  emptyBox: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    gap: 10,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: colors.onSurfaceVariant,
+  },
+
+  // Выбор вагона
+  blockLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.onSurface,
+    marginBottom: 10,
+  },
+  chipsScroll: {
+    flexGrow: 0,
     marginBottom: 20,
+  },
+  chip: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  chipTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.onSurface,
+  },
+  chipTitleActive: {
+    color: '#FFFFFF',
+  },
+  chipSub: {
+    fontSize: 11,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  chipSubActive: {
+    color: '#DCE5FA',
+  },
+
+  // Легенда
+  legendRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
     paddingHorizontal: 4,
   },
   legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   legendBox: {
     width: 22,
@@ -348,42 +437,55 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   legendOccupied: {
-    backgroundColor: "#E6EBFB",
+    backgroundColor: '#E6EBFB',
   },
   legendText: {
     fontSize: 13,
     color: colors.onSurface,
-    fontWeight: "600",
+    fontWeight: '600',
   },
+  legendHint: {
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+
+  // Вагон
   carriage: {
-    backgroundColor: "#F1F3FF",
+    backgroundColor: '#F1F3FF',
     borderRadius: 20,
     padding: 16,
     paddingLeft: 20,
     borderWidth: 1,
-    borderColor: "#E0E7FF",
+    borderColor: '#E0E7FF',
     borderLeftWidth: 8,
-    borderLeftColor: "#D5DCF0",
+    borderLeftColor: '#D5DCF0',
   },
   carriageHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
   },
   carriageTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.onSurface,
+  },
+  carriagePrice: {
+    fontSize: 14,
+    fontFamily: fonts.mono,
+    color: colors.primary,
   },
   sideLabel: {
     fontSize: 13,
     color: colors.onSurfaceVariant,
-    fontWeight: "500",
+    fontWeight: '500',
     marginBottom: 12,
   },
   seatsRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 10,
     marginBottom: 10,
   },
@@ -394,12 +496,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.outline,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  seatEmpty: {
+    width: 48,
+    height: 48,
   },
   seatOccupied: {
-    backgroundColor: "#E6EBFB",
-    borderColor: "#E6EBFB",
+    backgroundColor: '#E6EBFB',
+    borderColor: '#E6EBFB',
   },
   seatSelected: {
     backgroundColor: colors.primary,
@@ -411,38 +517,41 @@ const styles = StyleSheet.create({
     color: colors.onSurface,
   },
   seatTextOccupied: {
-    color: "#9AA3B8",
+    color: '#9AA3B8',
   },
   seatTextSelected: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
   },
   aisleBar: {
     height: 48,
     marginVertical: 24,
-    backgroundColor: "#E6EBFB",
+    backgroundColor: '#E6EBFB',
     borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   aisleText: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: '600',
     color: colors.onSurfaceVariant,
     letterSpacing: 3,
   },
+
+  // Нижняя панель
   bottomBar: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: colors.card,
     paddingTop: 16,
     paddingHorizontal: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
     borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
+    borderTopColor: '#E2E8F0',
   },
   bottomSub: {
     fontSize: 12,
@@ -450,21 +559,26 @@ const styles = StyleSheet.create({
   },
   selectedSeatsList: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.primary,
+  },
+  totalText: {
+    fontSize: 13,
+    fontFamily: fonts.mono,
+    color: colors.onSurface,
   },
   confirmBtn: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 12,
   },
   confirmBtnDisabled: {
-    backgroundColor: "#9E9E9E",
+    backgroundColor: '#9E9E9E',
   },
   confirmBtnText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
+    color: '#FFFFFF',
+    fontWeight: '700',
     fontSize: 14,
   },
 });
