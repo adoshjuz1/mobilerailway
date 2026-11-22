@@ -9,23 +9,48 @@ import {
   Image,
   Animated,
 } from "react-native";
+import { colors } from '../theme';
+
+const SLIDES = [
+  {
+    title: "Оңай іздеу",
+    subtitle:
+      "Интеллектуальды бағыт жоспарлаушымыздың көмегімен ең жақсы бағыттар мен бағаларды секундтарда табыңыз.",
+    imd: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQs-DdhaaGYk3676IU_OsExLH7fqN-lsOMipwD4ylA3xA&s=10",
+  },
+  {
+    title: "Ыңғайлы кесте",
+    subtitle:
+      "Поезердің қозғалыс кестесін нақты уақыт режимінде қадағалап, өзіңізге ыңғайлы уақытты таңдаңыз.",
+    imd: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd84zcpfTxMYn_SlsIgrx12maccAwXGgbOOzVj12UbVw&s=10",
+  },
+  {
+    title: "Қауіпсіз төлем",
+    subtitle:
+      "Билеттерді сенімді әрі қауіпсіз төлем жүйелері арқылы комиссиясыз сатып алыңыз.",
+    imd: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJgey8LIMlO270We3_YjvyeUkh3NrKxrdGE4nu4L4ADA&s=10",
+  },
+];
+
+const DOT_ACTIVE_WIDTH = 28;
+const DOT_WIDTH = 8;
 
 export default function OnboardingScreen({ navigation }) {
   const [currentStep, setCurrentStep] = useState(0);
-  const animValues = useRef(
-    [0, 1, 2].map((_, i) => new Animated.Value(i === 0 ? 28 : 8)),
+  const dotWidths = useRef(
+    SLIDES.map((_, i) => new Animated.Value(i === 0 ? DOT_ACTIVE_WIDTH : DOT_WIDTH)),
   ).current;
   const animateDots = (toStep) => {
-    animValues.forEach((anim, i) => {
+    dotWidths.forEach((anim, i) => {
       Animated.timing(anim, {
-        toValue: i === toStep ? 28 : 8,
+        toValue: i === toStep ? DOT_ACTIVE_WIDTH : DOT_WIDTH,
         duration: 250,
         useNativeDriver: false,
       }).start();
     });
   };
-  const slamNext = () => {
-    if (currentStep < slid.length - 1) {
+  const handleNext = () => {
+    if (currentStep < SLIDES.length - 1) {
       const nextStep = currentStep + 1;
       setCurrentStep(nextStep);
       animateDots(nextStep);
@@ -33,26 +58,7 @@ export default function OnboardingScreen({ navigation }) {
       navigation.replace("Login", { initialTab: "signup" }); // 👈 Переходим сразу на регистрацию
     }
   };
-  const slid = [
-    {
-      title: "Оңай іздеу",
-      subtitle:
-        "Интеллектуальды бағыт жоспарлаушымыздың көмегімен ең жақсы бағыттар мен бағаларды секундтарда табыңыз.",
-      imd: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQs-DdhaaGYk3676IU_OsExLH7fqN-lsOMipwD4ylA3xA&s=10",
-    },
-    {
-      title: "Ыңғайлы кесте",
-      subtitle:
-        "Поезердің қозғалыс кестесін нақты уақыт режимінде қадағалап, өзіңізге ыңғайлы уақытты таңдаңыз.",
-      imd: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd84zcpfTxMYn_SlsIgrx12maccAwXGgbOOzVj12UbVw&s=10",
-    },
-    {
-      title: "Қауіпсіз төлем",
-      subtitle:
-        "Билеттерді сенімді әрі қауіпсіз төлем жүйелері арқылы комиссиясыз сатып алыңыз.",
-      imd: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJgey8LIMlO270We3_YjvyeUkh3NrKxrdGE4nu4L4ADA&s=10",
-    },
-  ];
+
 
   return (
     <SafeAreaView style={styles.container}>
